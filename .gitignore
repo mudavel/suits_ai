@@ -4,8 +4,6 @@
 *.env.*.local
 
 # Dados sensíveis — não versionar
-data/subsidios/
-data/processos_exemplo/
 data/dataset_raw_60k.csv
 
 # Dependências de pacotes
@@ -20,6 +18,7 @@ dist/
 build/
 .next/
 .nuxt/
+pytest_cache/
 
 # Outputs e artefatos
 *.log
