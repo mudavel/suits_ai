@@ -25,9 +25,9 @@ O componente `src/components/Brand/Brand.jsx` concentra a assinatura gráfica. A
 
 O login é um seletor de perfis de demonstração. Não representa autenticação. A seleção usa botões, foco visível e navegação por teclado. O cabeçalho mantém navegação em telas pequenas, menu de perfil com fechamento por Escape/clique externo e link para pular ao conteúdo. O layout respeita preferência por movimento reduzido.
 
-Para verificar as telas com os dados existentes, foram corrigidas apenas as leituras básicas de lista/detalhe e overview: envelope `items`, nomes e valores em snake_case, erros explícitos, nulos e documentos originais. O frontend não faz fallback automático para casos fictícios. A triagem nesta etapa mostra a primeira página retornada pela API; paginação operacional completa continua na integração planejada. O indicador de processos exibidos e a exposição referem-se à página carregada.
+A interface consome os dados da API, com paginação e filtros de status/UF no servidor. Busca, recomendação, ordenação e exposição referem-se à página carregada, conforme indicado na tela. Não há fallback automático para casos fictícios.
 
-Geração de minutas, chat, cenários e decisões continuam pendentes de integração. Os controles indisponíveis são identificados como tal, sem respostas fabricadas e sem chamadas pagas automáticas. A governança inicia com dados do overview; valores ilustrativos só aparecem após selecionar “Explorar simulação”. Essa simulação não processa a planilha de 60 mil casos.
+Pareceres, documentos, cenários, conversas, minutas e decisões estão conectados aos endpoints do backend. Gerações só ocorrem por ação explícita; abrir o workspace recupera os dados já salvos. A governança mostra contagens, inventário e decisões da operação, preservando os indicadores ainda indisponíveis como ausentes. Os contratos e limites estão no [README do frontend](README.md). A planilha de 60 mil casos não é processada por essa interface.
 
 Validação local:
 
