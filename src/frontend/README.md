@@ -1,6 +1,6 @@
-# Frontend — Suits AI
+# Frontend — Enter OS
 
-React 19, JavaScript/JSX, Vite 8, Tailwind CSS 4, React Router 7 e Lucide. Estado local com hooks e Context; sem dependência adicional para chat, Markdown ou exportação de PDF.
+React 19, JavaScript/JSX, Vite 8, Tailwind CSS 4, React Router 7 e Lucide. Estado local com hooks e Context; renderização de Markdown com react-markdown e remark-gfm. O PDF é exportado pelo backend.
 
 ## Executar
 
@@ -29,6 +29,8 @@ Em produção, sirva o build e a API na mesma origem, encaminhando `/api` ao Fas
 Conversas, minutas e decisões têm navegação por páginas de 20 registros. O backend não garante um snapshot entre páginas durante gravações concorrentes; atualizar o histórico consulta novamente a página.
 
 A listagem básica não incorpora a política persistida. Por isso, a triagem consulta o parecer salvo de cada caso da página, com até seis consultas simultâneas, sem gerar análises. Falhas parciais são identificadas e não preenchem recomendações fictícias.
+
+Pareceres, respostas do copiloto, cenários e avisos gerados são renderizados em Markdown, incluindo listas, tabelas e blocos de código. As minutas têm uma prévia formatada do texto atual do editor. A renderização preserva o conteúdo salvo, ignora HTML bruto e mantém o filtro de URLs do react-markdown; imagens aparecem como texto alternativo.
 
 ## Comportamento de rede e limites
 

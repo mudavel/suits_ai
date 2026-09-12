@@ -20,7 +20,7 @@ export default function RoleRoute({ allowedRoles, children }) {
             Governança do contencioso
           </h2>
           <p className="text-sm text-muted max-w-md mx-auto leading-relaxed">
-            O painel de <strong>Governança, Aderência (A01) e Sensibilidade Contrafactual</strong> é de acesso restrito à Diretoria Jurídica e Gestão Centralizada do <strong>Banco Unicamp S.A.</strong>
+            O painel de <strong>Governança e acompanhamento do contencioso</strong> é de acesso restrito à Diretoria Jurídica e Gestão Centralizada do <strong>Banco Unicamp S.A.</strong>
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export default function RoleRoute({ allowedRoles, children }) {
             <span className="text-accent-ink">{currentProfile.name} ({currentProfile.badge})</span>
           </div>
           <p>
-            Advogados credenciados têm permissão de acesso à <strong>Triagem de Casos</strong> e ao <strong>Workspace de Elaboração de Peças e Simulação de Alçada</strong>.
+            Advogados credenciados têm permissão de acesso à <strong>Triagem de Casos</strong> e ao <strong>Ambiente de Elaboração de Peças e Consulta de Alçada</strong>.
           </p>
         </div>
 

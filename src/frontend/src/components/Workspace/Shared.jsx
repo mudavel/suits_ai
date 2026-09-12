@@ -1,3 +1,5 @@
+import MarkdownContent from '../MarkdownContent'
+import { systemText } from '../../services/productLanguage'
 import { LoaderCircle, ArrowUpRight } from 'lucide-react'
 import { documentUrl } from '../../services/api'
 
@@ -9,11 +11,11 @@ export function Busy({ children = 'Carregando...' }) {
   return <p role="status" className="flex items-center gap-2 text-xs text-muted py-3"><LoaderCircle size={15} className="animate-spin shrink-0" />{children}</p>
 }
 export function Mode({ value }) {
-  return <span className="text-[10px] rounded border border-line px-2 py-1 text-muted">{{ local: 'Processamento local', openai: 'Gerado com IA', mock: 'Demonstração' }[value] || 'Modo não informado'}</span>
+  return <span className="text-[10px] rounded border border-line px-2 py-1 text-muted">{{ local: 'Consulta documental', openai: 'Gerado com IA', mock: 'Demonstração' }[value] || 'Origem não informada'}</span>
 }
 export function Warnings({ items = [] }) {
   if (!items.length) return null
-  return <ul className="notice space-y-2 list-disc pl-7">{items.map((item, index) => <li key={index}>{item.replace('Motor da branch 1 ainda não integrado', 'Motor de política indisponível').replace('B1 não declara', 'O motor não declara')}</li>)}</ul>
+  return <ul className="notice space-y-2 list-disc pl-7">{items.map((item, index) => <li key={index}><MarkdownContent>{systemText(item)}</MarkdownContent></li>)}</ul>
 }
 export function Sources({ items = [], caseId }) {
   if (!items.length) return null

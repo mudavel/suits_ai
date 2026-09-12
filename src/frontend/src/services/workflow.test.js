@@ -14,7 +14,7 @@ test('parecer histórico, de outro caso ou versão não define a política atual
 test('score só recebe o rótulo de derrota quando o produtor declara esse significado', () => {
   assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'loss_probability' }).label, 'Probabilidade de derrota')
   assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'recommendation_confidence' }).label, 'Confiança na recomendação')
-  assert.match(policyScore({ confidence_score: .8 }).label, /semântica não informada/)
+  assert.match(policyScore({ confidence_score: .8 }).label, /interpretação não definida/)
   assert.equal(policyScore({ confidence_score: .8 }).value, .8)
   assert.equal(policyScore(null), null)
 })

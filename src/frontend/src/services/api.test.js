@@ -63,7 +63,7 @@ test('404 do caso não é substituído por um caso fictício', async t => {
 
 test('falha de conexão é propagada sem fallback para os mocks', async t => {
   t.mock.method(globalThis, 'fetch', async () => { throw new TypeError('Network unavailable') })
-  await assert.rejects(fetchCases(), /Sem conexão com o backend/)
+  await assert.rejects(fetchCases(), /Não foi possível acessar a plataforma/)
 })
 
 test('identificadores inválidos não disparam requisição', async t => {
