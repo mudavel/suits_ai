@@ -1,11 +1,27 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Building2, CornerDownLeft } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Building2, Cpu, CornerDownLeft } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Brand from '../../components/Brand/Brand'
 
 const roles = [
-  { key: 'LAWYER', title: 'Advogado', description: 'Analise processos, consulte documentos e prepare sua estratégia.', icon: BriefcaseBusiness },
-  { key: 'BANK', title: 'Diretoria jurídica', description: 'Acompanhe a operação e os indicadores do contencioso.', icon: Building2 },
+  {
+    key: 'LAWYER',
+    title: 'Advogado',
+    description: 'Analise processos, consulte documentos e prepare sua estratégia com alçadas.',
+    icon: BriefcaseBusiness,
+  },
+  {
+    key: 'BANK',
+    title: 'Diretoria jurídica',
+    description: 'Acompanhe a operação e os indicadores de governança em tempo real.',
+    icon: Building2,
+  },
+  {
+    key: 'FDE',
+    title: 'Forward Deployed Engineer',
+    description: 'Simule a carteira histórica de 60k casos e projete o ROI atuarial da operação.',
+    icon: Cpu,
+  },
 ]
 
 export default function LoginPage() {
@@ -34,19 +50,28 @@ export default function LoginPage() {
           </div>
         </section>
         <section className="login-access" aria-labelledby="access-title">
-          <div className="access-heading"><span className="eyebrow">COMECE POR AQUI</span><span className="access-number">01 — 02</span></div>
+          <div className="access-heading"><span className="eyebrow">COMECE POR AQUI</span><span className="access-number">01 — 03</span></div>
           <h2 id="access-title">Qual é o seu perfil?</h2>
           <p className="access-description">Escolha como deseja acessar a plataforma.</p>
           <div className="profile-options">
             {roles.map(({ key, title, description, icon: Icon }) => (
-              <button key={key} type="button" onClick={() => handleEnter(key)} className={'profile-option ' + (currentProfile.id === key ? 'profile-option--selected' : '')}>
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleEnter(key)}
+                className={'profile-option ' + (currentProfile.id === key ? 'profile-option--selected' : '')}
+              >
                 <span className="profile-icon"><Icon size={22} strokeWidth={1.4} /></span>
-                <span className="profile-content"><span className="profile-title">{title}</span><span className="profile-description">{description}</span><span className="profile-person">{PROFILES[key].name}</span></span>
+                <span className="profile-content">
+                  <span className="profile-title">{title}</span>
+                  <span className="profile-description">{description}</span>
+                  <span className="profile-person">{PROFILES[key].name} ({PROFILES[key].organization})</span>
+                </span>
                 <span className="profile-arrow"><ArrowUpRight size={22} strokeWidth={1.5} /></span>
               </button>
             ))}
           </div>
-          <p className="access-note">Perfis de demonstração para explorar os fluxos da plataforma.</p>
+          <p className="access-note">Perfis de demonstração para explorar todos os fluxos da plataforma.</p>
         </section>
       </main>
       <div className="login-bottom-band"><span>O próximo passo começa com contexto.</span><ArrowRight size={24} strokeWidth={1.4} /></div>

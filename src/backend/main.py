@@ -58,7 +58,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health", tags=["Health"], summary="Health Check")
     async def health_check():
-        return "Processo saudando normalmente. Suits AI — EnterOS Backend v0.2.0"
+        return {
+            "status": "healthy",
+            "message": "Processo saudando normalmente. Suits AI — EnterOS Backend v0.2.0",
+            "version": "0.2.0",
+            "data_mode": settings.data_mode,
+        }
 
     @app.get("/api/health", tags=["Health"], summary="API Health Check")
     async def health_check():

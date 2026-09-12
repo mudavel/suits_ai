@@ -21,6 +21,16 @@ const PROFILES = {
     color: 'indigo',
     defaultRoute: '/monitoramento',
   },
+  FDE: {
+    id: 'FDE',
+    name: 'Alexandre Prado',
+    title: 'Forward Deployed Engineer',
+    organization: 'Enter AI Solutions',
+    badge: 'Engenharia de Implantação (FDE)',
+    avatar: 'AP',
+    color: 'emerald',
+    defaultRoute: '/simulacao',
+  },
 }
 
 const AuthContext = createContext(null)
