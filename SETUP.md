@@ -28,8 +28,7 @@ Guia completo para configuração do ambiente, execução de testes e inicializa
 
 3. Instale as dependências:
    ```bash
-   uv pip install -r backend/requirements-dev.txt
-   uv pip install -r backend/requirements.txt
+   uv pip install -r requirements.txt
    ```
 
 4. Configure as variáveis de ambiente:
@@ -69,19 +68,17 @@ python run.py
 
 ```
 suits_ai/
-├── backend/             # Servidor FastAPI, Routers, Serviços e Schemas DTO
-│   ├── routers/         # Rotas /cases, /analysis, /monitoring
-│   ├── services/        # Serviços de negócio, mocks e integrações
-│   └── tests/           # Testes automatizados da API
 ├── src/
+│   ├── backend/         # Servidor FastAPI, Routers, Serviços e Schemas DTO
 │   ├── policy/          # Motor de decisão jurimétrica, regras e pricing atuarial
 │   └── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
-├── data/                # Bases de dados sintéticas e amostras (.csv)
+├── frontend/            # Aplicação React 19 + Vite (UI do Advogado e Cockpit)
+├── tests/               # Testes automatizados (API, Policy, Pricing, Monitor)
+├── data/                # Bases de dados operacionais e amostras (.csv)
 ├── scripts/             # Pipelines de dados, treino do modelo e simulações
-├── artefatos/           # Modelos treinados (.pkl) e metadados (.json)
-├── artefacts/           # Arquivos e insumos brutos do desafio
+├── artefacts/           # Insumos brutos, documentações e modelos (.pkl, .json)
 ├── docs/                # Slides executivos, especificações e documentação
-├── tests/               # Testes unitários do policy engine e do monitor
+├── requirements.txt     # Dependências unificadas do projeto
 ├── pytest.ini           # Configuração unificada do Pytest
 ├── run.py               # Orquestrador de execução da aplicação
 ├── SPEC.md              # Especificação técnica e contratos de interface

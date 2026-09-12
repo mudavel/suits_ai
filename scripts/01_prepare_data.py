@@ -143,13 +143,13 @@ def main():
     
     # 5. Exportação dos Dados e Metadados
     data_dir = root_dir / "data"
-    artefatos_dir = root_dir / "artefatos"
+    artefacts_dir = root_dir / "artefacts" / "suits_docs"
     data_dir.mkdir(parents=True, exist_ok=True)
-    artefatos_dir.mkdir(parents=True, exist_ok=True)
+    artefacts_dir.mkdir(parents=True, exist_ok=True)
     
     csv_path = data_dir / "sentencas.csv"
     parquet_path = data_dir / "sentencas_processadas.parquet"
-    stats_path = artefatos_dir / "baseline_stats.json"
+    stats_path = artefacts_dir / "baseline_stats.json"
     
     print(f"\n💾 Salvando dataset limpo em CSV: {csv_path}...")
     df.to_csv(csv_path, index=False, encoding="utf-8")

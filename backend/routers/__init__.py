@@ -1,1 +1,0 @@
-"""Endpoints HTTP da API."""

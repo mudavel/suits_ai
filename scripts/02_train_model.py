@@ -47,8 +47,8 @@ if sys.platform == "win32":
 def main():
     root_dir = Path(__file__).resolve().parent.parent
     data_path = root_dir / "data" / "sentencas_processadas.parquet"
-    artefatos_dir = root_dir / "artefatos"
-    artefatos_dir.mkdir(parents=True, exist_ok=True)
+    artefacts_dir = root_dir / "artefacts" / "suits_docs"
+    artefacts_dir.mkdir(parents=True, exist_ok=True)
     
     if not data_path.exists():
         raise FileNotFoundError(f"Base de dados não encontrada em {data_path}. Execute scripts/01_prepare_data.py primeiro.")
@@ -168,8 +168,8 @@ def main():
         print(f"   - {feat}: {imp*100:.2f}%")
         
     # 6. Salvar Artefatos Serializados
-    model_pkl_path = artefatos_dir / "modelo_jurimetrico.pkl"
-    features_json_path = artefatos_dir / "features.json"
+    model_pkl_path = artefacts_dir / "modelo_jurimetrico.pkl"
+    features_json_path = artefacts_dir / "features.json"
     
     print(f"\n💾 Serializando modelo calibrado em: {model_pkl_path}...")
     joblib.dump(calibrated_clf, model_pkl_path)

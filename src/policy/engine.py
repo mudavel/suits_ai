@@ -32,13 +32,15 @@ _MODEL_CACHE = None
 
 
 def get_model():
-    """Carrega o pipeline do Random Forest calibrado a partir de artefatos/."""
+    """Carrega o pipeline do Random Forest calibrado a partir de artefacts/."""
     global _MODEL_CACHE
     if _MODEL_CACHE is not None:
         return _MODEL_CACHE
         
     root_dir = Path(__file__).resolve().parent.parent.parent
-    model_path = root_dir / "artefatos" / "modelo_jurimetrico.pkl"
+    model_path = root_dir / "artefacts" / "suits_docs" / "modelo_jurimetrico.pkl"
+    if not model_path.exists():
+        model_path = root_dir / "artefacts" / "modelo_jurimetrico.pkl"
     
     if model_path.exists():
         try:

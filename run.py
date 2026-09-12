@@ -15,7 +15,7 @@ def main():
     print(f"🚀 Iniciando Suits AI Backend em http://{host}:{port}")
     print(f"📖 Documentação interativa Swagger: http://{host}:{port}/docs")
     
-    uvicorn.run("backend.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("src.backend.main:app", host=host, port=port, reload=reload)
 
 if __name__ == "__main__":
     main()
