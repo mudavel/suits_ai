@@ -10,8 +10,8 @@ router = APIRouter(prefix="/api", tags=["Análise"])
     "/analyze",
     response_model=AnalyzeResponse,
     responses={404: {"model": ErrorResponse, "description": "Caso não encontrado"}},
-    summary="Obter parecer simulado para um caso",
-    description="Fase 1: resposta fixa de demonstração, sem IA ou modelo de risco.",
+    summary="Analisar documentos e consultar a política disponível",
+    description="Persiste o parecer com suas fontes. policy=null enquanto o motor da branch 1 não estiver integrado.",
 )
 async def analyze_case(
     payload: AnalyzeRequest, cases: Cases, analysis: Analysis

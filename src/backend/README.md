@@ -1,205 +1,319 @@
 # Backend — branch 2
 
-Primeira entrega de `feature/backend-api-copilot`, seguindo a fase 1 de
-[`ROADMAP.md`](../artefacts/suits_docs/ROADMAP.md) e os contratos de
-[`SPEC.md`](../artefacts/suits_docs/SPEC.md). O servidor FastAPI publica as quatro
-rotas iniciais e o Swagger para a integração do frontend.
+API FastAPI de `feature/backend-api-copilot`, seguindo o
+[`ROADMAP.md`](../../artefacts/suits_docs/ROADMAP.md) e o
+[`SPEC.md`](../../artefacts/suits_docs/SPEC.md). Esta versão acrescenta documentos,
+conversas, minutas, exportação e persistência à fundação da fase 1.
 
-Os dois casos `DEMO-001` e `DEMO-002` são inteiramente fictícios. Toda resposta de
-dados contém `data_mode: "mock"`. Esta etapa não lê a planilha, não extrai os ZIPs,
-não chama a OpenAI e não persiste decisões. As probabilidades e faixas de acordo
-são exemplos fixos para a interface; não representam um modelo validado.
+O modelo padrão desta implementação foi atualizado para GPT-6 Astra. Essa
+configuração substitui a previsão de GPT-4o nos documentos compartilhados acima.
+
+O código desta frente fica em `src/backend/`, os testes em `tests/` e as
+dependências no `requirements.txt` da raiz, conforme o filetree do master.
+O motor de política pertence à branch 1; os indicadores A01–A20 e
+E01–E20 pertencem à branch 4. Os serviços têm pontos de substituição em
+`dependencies.py` e são inicializados no lifespan da aplicação.
+
+O [contrato de integração](INTEGRATION.md) registra os formatos HTTP, as
+diferenças encontradas nas branches remotas e o que falta alinhar entre frentes.
+O [OpenAPI versionável](openapi.json) permite gerar o cliente sem subir a API.
 
 ## Executar
 
-Python 3.10 ou superior; validado com CPython 3.12 no Windows. Execute a partir da
-raiz do repositório, na cópia de trabalho desta branch.
-
-PowerShell:
+Python 3.10 ou superior; validado com CPython 3.12 no Windows. Na raiz do repo:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
-.\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe run.py
 ```
 
-Linux/macOS:
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r backend/requirements-dev.txt
-.venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
+Em Linux/macOS, use `.venv/bin/python` nos dois últimos comandos.
+O modo padrão funciona sem chave de IA e sem bibliotecas nativas de PDF.
 
 - Swagger: <http://localhost:8000/docs>
-- Contrato OpenAPI: <http://localhost:8000/openapi.json>
-- Contrato disponível no repositório: [`openapi.json`](openapi.json).
-- Apenas dependências de execução: `backend/requirements.txt`.
+- OpenAPI: <http://localhost:8000/openapi.json>
+- SQLite: `src/backend/.local/suits.sqlite3`, ignorado pelo Git.
+- CORS: `http://localhost:5173` e `http://127.0.0.1:5173`.
 
-O CORS libera por padrão `http://localhost:5173` e `http://127.0.0.1:5173`, as
-origens de desenvolvimento do Vite. Para trocar as origens, defina a variável
-antes de iniciar o servidor; cada origem é separada por vírgula:
+O arquivo `.env` na raiz é carregado sem substituir variáveis do processo.
+Use `.env.example` na raiz como referência, preservando um `.env` já existente.
+Para alterar as origens, defina `SUITS_CORS_ORIGINS` com valores separados por
+vírgula. `SUITS_DATABASE_PATH` e `SUITS_ARTIFACTS_DIR` aceitam caminhos explícitos.
 
-```powershell
-$env:SUITS_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+## Modos de operação
+
+| Configuração | Padrão | Alternativas |
+|---|---|---|
+| `SUITS_DATA_MODE` | `artifacts` | `mock` mantém os exemplos da fase 1 |
+| `SUITS_AI_MODE` | `local` | `openai` habilita o GPT-6 Astra |
+| `SUITS_POLICY_MODE` | `unavailable` | `engine` conecta B1; `mock` somente com dados mock |
+| `OPENAI_MODEL` | `gpt-6-astra` | Outro ID compatível com Responses, raciocínio e saídas estruturadas |
+| `OPENAI_REASONING_EFFORT` | `low` | `medium`, `high`, `xhigh`, `max` |
+| `OPENAI_MAX_OUTPUT_TOKENS` | `25000` | Limite conjunto de raciocínio e texto, entre 1 e 128000 |
+| `OPENAI_TIMEOUT_SECONDS` | `120` | Timeout do SDK em segundos, finito e positivo |
+
+`data_mode: artifacts` significa leitura dos dois ZIPs fornecidos pelo evento.
+Os próprios PDFs se identificam como simulações do hackathon; `is_simulated: true`
+preserva essa informação. A planilha de 60 mil casos não é carregada. Os nomes
+das partes são extraídos dos documentos: o Banco UFMG citado nos autos não é
+renomeado para acompanhar a marca visual do frontend.
+
+O modo `local` faz extração, comparação e busca de trechos. Minutas usam modelos
+editáveis e cenários organizam alegações e verificações. Ele não simula respostas
+de um LLM. O modo `openai` usa `AsyncOpenAI`, Responses API e saídas estruturadas
+com Pydantic. Cada resposta identifica `generation_mode`.
+
+Para habilitar a IA, configure no ambiente local:
+
+```dotenv
+SUITS_AI_MODE=openai
+OPENAI_MODEL=gpt-6-astra
+OPENAI_REASONING_EFFORT=low
+OPENAI_MAX_OUTPUT_TOKENS=25000
+OPENAI_TIMEOUT_SECONDS=120
+OPENAI_API_KEY=sua-chave-local
 ```
 
-Nesta fase a configuração usa variáveis do processo; arquivos `.env` não são
-carregados automaticamente. Nenhuma chave de API é necessária para os mocks.
+A presença da chave sozinha não ativa chamadas. O modo OpenAI envia o contexto
+selecionado do caso e o histórico recente para a API, com `store=false`, timeout
+de 120 segundos por tentativa e até uma repetição de transporte; o tempo total
+pode superar 120 segundos. Referências desconhecidas, respostas inválidas e
+gerações incompletas geram HTTP 502; conteúdo parcial não é persistido como uma
+resposta concluída e não há troca silenciosa para conteúdo local.
 
-## Contratos para a pessoa 3
+A chamada usa `reasoning.effort=low`, conforme a orientação de migração de um
+modelo sem raciocínio. O Astra não aceita `none` nem `minimal`; a configuração
+recusa esses valores antes de chamar a API. O limite inicial de 25000 tokens
+inclui raciocínio e texto gerado e pode ser ajustado após medir os casos do piloto.
+É um teto por resposta, não uma reserva cobrada integralmente. O backend não envia
+`temperature`, `top_p` ou parâmetros de logprobs, incompatíveis com o Astra.
 
-| Método | Rota | Entrada | Resposta |
-|---|---|---|---|
-| GET | `/api/cases` | `page`, `page_size`, `status`, `uf` opcionais | `CaseListResponse` |
-| GET | `/api/cases/{case_id}` | ID inteiro positivo | `CaseDetail` |
-| POST | `/api/analyze` | JSON `{"case_id": 1}` | `AnalyzeResponse` |
-| GET | `/api/monitoring/overview` | Sem parâmetros | `MonitoringOverviewResponse` |
+Na migração de uma instalação existente, atualize `OPENAI_MODEL` no `.env` ou no
+ambiente do processo: uma configuração explícita continua tendo precedência
+sobre o novo padrão. Reinicie o servidor depois de alterar as variáveis.
 
-O Swagger descreve os campos, tipos e exemplos. As rotas futuras não são
-publicadas até que seus serviços estejam implementados.
+Os testes automatizados usam o SDK com transporte HTTP simulado, sem requisição
+externa. Antes da demonstração, valide o acesso ao modelo com uma chave da API e
+avalie os dois casos documentados: fidelidade às fontes, lacunas reconhecidas,
+qualidade das minutas, tempo de resposta e consumo de tokens. Os testes locais
+não medem a qualidade nem confirmam a disponibilidade do modelo na conta.
 
-**Lista:** `items`, `total`, `page`, `page_size`, `total_pages`, `data_mode`.
-Paginação começa em 1, tamanho padrão 20 e máximo 100. `total` é a quantidade
-após os filtros e antes da paginação. Uma página além do fim retorna `items: []`
-com o total preservado; nenhum resultado retorna `total_pages: 0`.
+Ao alternar entre os datasets `mock` e `artifacts`, use outro arquivo SQLite.
+A inicialização recusa misturar datasets, pois os IDs 1 e 2 têm significados distintos.
 
-Os filtros são combinados. `status` aceita `PENDENTE`, `EM_ANALISE` ou `CONCLUIDO`;
-`uf` aceita somente as 27 UFs brasileiras, incluindo DF, sem diferenciar
-maiúsculas e minúsculas. `ZZ` e `BR` retornam 422. O OpenAPI enumera as siglas.
-A lista traz
-identificação, UF, subassunto, valor da causa, status, recomendação, nível de risco
-e as seis flags de subsídios. O detalhe acrescenta `claims` e `documents`.
+## Casos e documentos
 
-**Documentos:** `category` distingue `AUTOS` de `SUBSIDIO`. `text_excerpt` contém
-texto sintético. `download_url` é `null`: o frontend deve desabilitar downloads
-sem URL. As flags indicam presença simulada; não atestam validade do documento.
+| Método | Rota | Uso |
+|---|---|---|
+| GET | `/api/cases` | Lista com `page`, `page_size`, `status`, `uf` |
+| POST | `/api/cases` | Cadastro manual sem documentos |
+| GET | `/api/cases/{case_id}` | Detalhe, flags, fatos extraídos e verificações |
+| GET | `/api/cases/{case_id}/documents/{document_id}` | Texto por página e campos com fonte |
+| GET | `/api/cases/{case_id}/documents/{document_id}/download` | Bytes do PDF original |
 
-**Análise:** `case_id`, `policy`, `policy_status`, `explanation`, `warnings`, `data_mode`. O objeto
-`policy` preserva os nomes do contrato da branch 1:
+A paginação começa em 1, com tamanho padrão 20 e máximo 100. `total` conta os
+resultados após filtros, antes da paginação. Status: `PENDENTE`, `EM_ANALISE`,
+`CONCLUIDO`. UF aceita somente as 27 siglas brasileiras, incluindo `DF`, nos
+filtros e no cadastro. Entradas em minúsculas são normalizadas para maiúsculas;
+siglas inexistentes, como `ZZ` ou `BR`, retornam 422. O OpenAPI enumera os valores
+válidos, conforme as [unidades da Federação do IBGE](https://www.ibge.gov.br/explica/codigos-dos-municipios.php).
+Os documentos usam URLs relativas à API; o frontend deve prefixar sua base URL.
+
+Os casos 1 e 2 têm, respectivamente, sete e quatro PDFs, somando 35 páginas.
+Os arquivos são lidos dentro dos ZIPs, sem extrair caminhos no disco. Cada PDF
+tem ID estável, SHA-256, número de páginas e status de extração. IDs de documento
+são vinculados ao caso; um ID de outro caso retorna 404.
+
+`facts` contém campos encontrados, valores e referências com documento, página
+e trecho. `checks` compara CPF, nome do titular, número de contrato e valor
+liberado, além de registrar lacunas documentais e a contestação de titularidade.
+Uma comparação `consistent` significa concordância textual, sem atestar
+autenticidade. Um campo não extraído permanece uma lacuna; PDFs sem texto
+recebem status parcial e não passam por OCR nesta versão.
+
+O cadastro manual retorna `data_mode: manual`, com flags de documentos falsas.
+O valor da causa deve ser positivo, conforme o contrato de entrada do motor B1.
+Importação de arquivos enviados pelo usuário não está implementada nesta etapa.
+
+## Parecer, cenários e conversa
+
+| Método | Rota | Corpo / finalidade |
+|---|---|---|
+| POST | `/api/analyze` | `{"case_id": 2}` |
+| GET | `/api/cases/{case_id}/analysis` | Recuperar o último parecer salvo, sem gerar novamente |
+| POST | `/api/scenarios` | `{"case_id": 2}` |
+| POST | `/api/chat` | `case_id`, `message`, `session_id` opcional |
+| GET | `/api/cases/{case_id}/chat/{session_id}` | Últimas 20 mensagens da conversa |
+| GET | `/api/cases/{case_id}/chats` | Conversas salvas do caso, com `limit` e `offset` |
+| POST | `/api/negotiation-copilot` | `case_id`, `proposed_amount` |
+
+A análise retorna `analysis_id`, `case_version`, `policy`, `policy_status`,
+`explanation`, `sources`, `document_checks`, `warnings`, `data_mode` e
+`generation_mode`. Sem B1, `policy` é `null` e `policy_status` é `unavailable`.
+Esse é um ajuste em relação ao mock da fase 1: a interface precisa tratar a
+ausência de recomendação e de valores. `confidence_score`, quando disponível,
+preserva o score original entre 0 e 1. O SPEC do master o define como probabilidade
+de derrota, mas a B1 publicada usa confiança na recomendação em alguns caminhos.
+O campo adicional `confidence_score_semantics` declara o significado: somente
+`loss_probability` autoriza esse rótulo. Se o produtor não declarar o significado,
+o retorno é `unspecified`, com aviso em `warnings`; não se calcula `1 - score`.
+
+Ao reabrir um caso, consulte `GET /api/cases/{case_id}/analysis`. O envelope traz
+`case_id`, `case_version`, `status` e `analysis`. `status: not_found` com
+`analysis: null` significa que ainda não existe parecer; `available` indica um
+parecer da versão atual; `stale` preserva um parecer histórico de outra versão.
+Um parecer histórico não define a alçada atual. Essa consulta não chama IA nem
+cria uma nova análise. `available` descreve a atualidade do parecer; a presença
+de política continua indicada pelo `policy_status` dentro dele.
+
+Com `SUITS_POLICY_MODE=engine`, o adaptador chama
+`src.policy.engine.evaluate_case(case_data)` fora do event loop, enviando os
+campos em português esperados por `CaseData`: `numero_processo`, `valor_causa`,
+`sub_assunto`, `uf` e `subsidios` aninhados. A B1 calcula as features do modelo.
+O adaptador traduz conclusões do dossiê para `CONFORME` ou `NAO_CONFORME`,
+preservando a distinção entre ausência e documento sem conclusão extraída.
+Conclusões conflitantes ou valor da causa não positivo geram 422; módulo ausente
+ou resultado incompatível gera 503. O motor e suas dependências já estão
+incorporados ao master; sua ativação continua explícita pela configuração.
+
+O copiloto recebe somente trechos do caso, com documento e página. As mensagens
+de uma conversa não podem ser consultadas usando outro caso. O histórico fica
+no SQLite e sobrevive a reinícios; a resposta de chat é JSON, sem streaming.
+`GET /api/cases/{case_id}/chats` permite recuperar os IDs das conversas mesmo
+após recarregar a interface. A lista traz título extraído da primeira mensagem,
+quantidade de mensagens, data de criação e última atualização; a conversa mais
+recentemente atualizada vem primeiro. A busca do histórico continua vinculada
+ao caso e ao `session_id`.
+Os cenários deixam explícita a ausência de histórico validado de magistrados.
+
+O prompt em `services/copilot.py` define o papel do copiloto jurídico do Suits AI.
+Ele distingue a solicitação do usuário de instruções inseridas nos documentos,
+separa alegações, registros e inferências e exige fontes que sustentem o texto.
+Lacunas e divergências devem ser explicadas, sem transformar documento presente
+em prova de autenticidade ou ausência de evidência em irregularidade. A política
+fornecida é preservada e as minutas mantêm pendências para revisão do advogado.
+
+A negociação compara o valor proposto com a última análise da versão atual do
+caso. Sem política retorna `SEM_POLITICA`; sem faixa, `SEM_FAIXA`. A comparação
+não cria acordo, aceite ou aprovação institucional.
+
+## Minutas e exportação
+
+| Método | Rota | Uso |
+|---|---|---|
+| POST | `/api/generate-draft` | `case_id`, `action`, `settlement_amount` para acordo |
+| GET | `/api/drafts/{draft_id}` | Recuperar a minuta persistida |
+| GET | `/api/cases/{case_id}/drafts` | Listar minutas salvas do caso, com `limit` e `offset` |
+| POST | `/api/export-pdf` | `draft_id`, `format` opcional (`pdf` ou `html`) |
+
+`action` aceita `DEFESA` ou `ACORDO`. Acordos exigem valor positivo com até duas
+casas decimais. `format: whatsapp` na geração prepara uma mensagem de proposta
+de acordo. O retorno preserva os campos de `DraftResponse` do SPEC e acrescenta
+ID, fontes, modo e data. `attached_subsidies` contém os IDs dos subsídios de
+referência; os PDFs originais são servidos separadamente.
+
+Toda minuta tem status `review_required`; assinatura, concordância, termos
+pendentes e teses não verificadas ficam para revisão. A exportação também
+aceita `content_markdown` para gerar o arquivo com o texto editado pelo frontend,
+preservando a versão original no SQLite. HTML bruto é escapado e imagens
+externas não são carregadas.
+
+As listas de conversas e minutas usam `items`, `total`, `limit`, `offset` e
+`has_more`. O limite padrão é 20 e o máximo 100. Minutas vêm da mais recente
+para a mais antiga; a lista contém resumos, e o conteúdo completo é recuperado
+pelo `draft_id`. Casos existentes sem histórico retornam listas vazias; casos
+inexistentes retornam 404. A paginação não constitui um snapshot entre requisições:
+ao atualizar a lista durante novos registros, deduplique pelos IDs.
+
+O exportador usa ReportLab, já incluído nas dependências normais, com fonte
+incorporada, cabeçalho e paginação. Não exige WeasyPrint, Pango ou instalação
+adicional do sistema. `X-PDF-Engine` retorna `reportlab`. Ambos os cabeçalhos
+`X-PDF-Engine` e `Content-Disposition` ficam expostos ao frontend por CORS.
+O formato HTML continua disponível para impressão. Para a interface, o fluxo é
+uma requisição a `/api/export-pdf` e o download do arquivo retornado, sem
+biblioteca adicional de geração de PDF no frontend.
+
+## Decisões, concorrência e integração com B4
+
+`POST /api/decisions` registra a decisão e conclui o caso numa transação:
 
 ```json
 {
-  "recommendation": "ACORDO",
-  "reasoning_code": "POWER_PAIR_AUSENTE",
-  "confidence_score": 0.8,
-  "confidence_score_semantics": "loss_probability",
-  "risk_level": "ALTO",
-  "settlement_pricing": {
-    "floor": 1500.0,
-    "target": 2500.0,
-    "ceiling": 4000.0,
-    "expected_loss": 6000.0
-  },
-  "applied_rules": ["MOCK: exemplo de resposta com faixa de negociação."]
+  "case_id": 2,
+  "action": "ACORDO",
+  "settlement_amount": 2500.00,
+  "lawyer_id": "adv-demo",
+  "law_firm_id": "escritorio-demo",
+  "expected_case_version": 0,
+  "analysis_id": null,
+  "override_reason": null,
+  "idempotency_key": "7cf332af-5447-4a03-8cba-1c5ea584f74b"
 }
 ```
 
-O SPEC do master define `confidence_score` como probabilidade de derrota, mas
-o motor publicado pela B1 usa confiança na recomendação em alguns caminhos.
-O contrato acrescenta `confidence_score_semantics`: somente `loss_probability`
-autoriza o rótulo de probabilidade de derrota. `recommendation_confidence`
-indica confiança na recomendação e `unspecified` indica significado não declarado.
-Nunca inverter ou reinterpretar o score a partir de `recommendation`.
-Os mocks marcam seus números fictícios com `loss_probability`; ainda não há
-chamada ao motor. O enum de `reasoning_code` aceita os códigos publicados pela
-B1, incluindo `FALHA_PROBATORIA` e `USUFRUTO_COMPROVADO`, e mantém os exemplos
-do SPEC. Valores monetários estão em reais. O exemplo de defesa tem
-`settlement_pricing: null`.
-Solicitar uma análise não altera o status do caso.
+Use a `version` retornada pelo detalhe e gere uma chave por tentativa lógica
+(`crypto.randomUUID()` no navegador), reutilizando-a somente em repetições do
+mesmo envio. Duas decisões concorrentes não se sobrescrevem: a segunda recebe
+409. Repetir a mesma chave e os mesmos dados retorna o registro existente.
 
-`policy_status` identifica `mock`, `available` ou `unavailable`. O contrato
-aceita `policy: null` para que a interface trate a indisponibilidade desde a
-fundação. O serviço atual sempre devolve a política fictícia com status `mock`.
+Se houver uma análise, a decisão registra sua cópia. Divergir da recomendação
+ou exceder o teto requer `override_reason`. Sem política, `is_override` fica
+`null`; uma decisão manual não entra implicitamente como aderente. Registros
+fechados não são reabertos ou substituídos por esta API.
 
-**Monitoramento:** mantém os seis campos definidos no `SPEC.md`, acrescentando
-`data_mode` e `metrics_status`. `adherence_rate` é uma fração de 0 a 1. O total corresponde aos dois
-casos fictícios; os demais indicadores permanecem zerados como placeholders,
-pois ainda não há decisões registradas ou integração com a branch 4.
-`metrics_status` é `mock` nesta fase; `partial` e `available` ficam previstos
-para a integração. Aderência, economia e tempo médio aceitam `null` quando
-indisponíveis: a interface deve diferenciar ausência de dados de zero medido.
-O DTO já enumera os futuros modos `artifacts`, `manual` e `real`, mas esta
-implementação usa exclusivamente `mock`.
+`GET /api/decisions?case_id=2&limit=200&offset=0` fornece registros paginados,
+com decisão, dados informados pelo advogado e snapshot da análise para B4.
+O envelope mantém `items` e `limit` e acrescenta `total`, `offset` e `has_more`.
+Use a paginação até `has_more: false`; a ordem é da decisão mais recente para a
+mais antiga. Consulte as limitações de atualização concorrente no contrato.
 
-**Erros:** caso inexistente retorna HTTP 404 com
-`{"detail": "Caso não encontrado."}`. Entradas inválidas retornam HTTP 422 com
-o formato padrão de validação do FastAPI. O corpo de `/api/analyze` aceita apenas
-`case_id`; campos adicionais são rejeitados para detectar divergências de contrato.
+- `/api/monitoring/overview`: contagens operacionais do SQLite. Aderência, economia
+  e tempo médio ficam `null`, com `metrics_status: partial`, até a integração.
+- `/api/monitoring/adherence` e `/effectiveness`: contrato pendente explícito,
+  com `status: pending_integration`; não preenchem métricas A/E fictícias.
+- `/api/monitoring/subsidies`: inventário de documentos ausentes por tipo.
 
-Exemplo no frontend:
+O seletor Advogado/Banco definido no commit `b18269a` pertence ao frontend.
+Esta execução local do hackathon ainda não implementa autenticação e autorização
+de produção; `lawyer_id` e `law_firm_id` são identificadores informados na requisição.
 
-```javascript
-const API = "http://localhost:8000";
-const listResponse = await fetch(`${API}/api/cases?page=1&page_size=20`);
-if (!listResponse.ok) throw new Error("Falha ao carregar casos");
-const cases = await listResponse.json();
+## Erros e testes
 
-const analysisResponse = await fetch(`${API}/api/analyze`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ case_id: 2 }),
-});
-if (!analysisResponse.ok) throw new Error("Falha ao analisar caso");
-const analysis = await analysisResponse.json();
-```
-
-## Integração com as outras branches
-
-Toda a implementação desta frente está em `backend/`, inclusive os testes e as
-dependências. Os serviços são assíncronos e substituíveis em `dependencies.py`;
-suas interfaces estão em `services/contracts.py`.
-
-- **Pessoa 1:** integrar `src/policy/engine.py::evaluate_case(case_data)` dentro do
-  serviço de análise. O DTO HTTP `PolicyResult` preserva os campos centrais do
-  `SPEC.md` e explicita a semântica do score. O motor publicado espera
-  `numero_processo`, `valor_causa`, `uf`, `sub_assunto` e `subsidios` em português;
-  será necessário um adaptador na integração. A inferência
-  síncrona deve executar fora do event loop, e o parecer deve refletir o resultado
-  do motor. Os mocks não implementam regras ou treinam modelos.
-- **Pessoa 3:** consumir os contratos publicados em `/openapi.json`, mostrar o modo
-  de demonstração e tratar erros 404/422. Os casos de demonstração exercitam uma
-  defesa e um acordo, além de duas UFs e dois status.
-- **Pessoa 4:** fornecer os resultados analíticos pelo serviço de monitoramento,
-  preservando os campos e as unidades do DTO. Os indicadores atuais não medem
-  economia ou aderência reais. O JSON publicado pela B4 inclui resultados de
-  simulação e taxas como `85.8`; o HTTP da B2 usa fração, por exemplo `0.858`.
-  A origem dos dados, os nomes dos campos e as unidades exigem alinhamento antes
-  de substituir o mock.
-
-A configuração atual instancia explicitamente os três serviços mock. Não há
-troca automática de modo pela presença de módulos ou chaves: a integração real
-deve ser feita em conjunto com seus testes e com a indicação correta de origem.
-
-Referências verificadas: master `b18269a`, B1 `2529d7c` (mesmo código de motor
-de `365e9a3`) e B4 `239bae6`. Esses alinhamentos registram divergências observadas;
-a integração real com B1/B4 e os testes com o frontend serão entregues depois.
-
-## Testes
-
-Na raiz do repositório:
+404 indica recurso inexistente; 409, duplicidade ou versão desatualizada;
+422, entrada inválida ou justificativa necessária; 502, falha da IA;
+503, indisponibilidade do motor. `detail` pode ser texto para erros de negócio
+ou lista de campos para erros de validação do FastAPI.
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -c backend/pytest.ini -q
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Os testes cobrem paginação, filtros combinados, detalhes, erros 404/422,
-contratos de análise e monitoramento, substituição dos serviços, CORS e OpenAPI.
-Não precisam de acesso à rede, banco de dados, planilha ou chave da OpenAI.
+Os testes cobrem os mocks originais, PDFs dos ZIPs, fontes, histórico após
+reinício, isolamento por caso, idempotência, decisões concorrentes, negociação,
+exportação segura e contrato do SDK OpenAI por transporte simulado.
+Também cobrem a recuperação do parecer e das listas ao reabrir casos, pareceres
+desatualizados e execução do PDF sem WeasyPrint, Pango ou importação de B1/B4.
+O contrato inclui os parâmetros do Astra, saídas com itens de raciocínio,
+recusa de respostas incompletas e validação das configurações de geração.
+Eles usam bancos temporários e não precisam de chave ou rede.
 
-Depois de alterar rotas ou schemas, regenere o arquivo OpenAPI antes dos testes:
+A integração OpenAI segue a documentação de
+[saídas estruturadas](https://developers.openai.com/api/docs/guides/structured-outputs)
+e o [guia de migração do GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra#migration-quickstart).
+O orçamento inicial de tokens segue a orientação de
+[espaço para raciocínio](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning).
+O `run.py` compartilhado já inicia `src.backend.main:app` e carrega o `.env`
+da raiz antes de ler `API_HOST`, `API_PORT` e `APP_ENV`. Variáveis do processo
+têm precedência. O próximo checkpoint alinha a semântica do score da B1,
+os indicadores operacionais da B4 e o frontend B3.
+
+Ao alterar um DTO ou rota, regenere `src/backend/openapi.json` na raiz do repositório:
 
 ```powershell
-python -B -m backend.export_openapi
+python -B -m src.backend.export_openapi
 ```
 
-O teste compara o contrato salvo com o OpenAPI da aplicação e verifica que
-somente as quatro rotas desta fase estão publicadas.
-
-## Próxima entrega da branch 2
-
-Seguir a fase 2 do roadmap: extração dos documentos dos casos 01 e 02,
-persistência SQLite, cenários, chat jurídico, minutas, PDF e registro de decisões.
-A integração com o motor da pessoa 1 e as métricas da pessoa 4 ocorre nos
-checkpoints seguintes. O orquestrador compartilhado `run.py` ainda será integrado;
-por enquanto o comando Uvicorn acima inicia este backend de forma independente.
+O teste de contrato detecta diferenças entre o arquivo e o OpenAPI da aplicação.
+Os testes de contrato com o código de B1 do próprio repositório estão descritos em
+[INTEGRATION.md](INTEGRATION.md#reproduzir-a-verificacao).

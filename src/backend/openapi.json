@@ -21,9 +21,26 @@
       },
       "AnalyzeResponse": {
         "properties": {
+          "analysis_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
           "case_id": {
             "exclusiveMinimum": 0.0,
             "title": "Case Id",
+            "type": "integer"
+          },
+          "case_version": {
+            "default": 0,
+            "title": "Case Version",
             "type": "integer"
           },
           "data_mode": {
@@ -36,8 +53,25 @@
             "title": "Data Mode",
             "type": "string"
           },
+          "document_checks": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCheck"
+            },
+            "title": "Document Checks",
+            "type": "array"
+          },
           "explanation": {
             "title": "Explanation",
+            "type": "string"
+          },
+          "generation_mode": {
+            "default": "mock",
+            "enum": [
+              "local",
+              "openai",
+              "mock"
+            ],
+            "title": "Generation Mode",
             "type": "string"
           },
           "policy": {
@@ -60,6 +94,13 @@
             "title": "Policy Status",
             "type": "string"
           },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
           "warnings": {
             "items": {
               "type": "string"
@@ -78,6 +119,103 @@
         "title": "AnalyzeResponse",
         "type": "object"
       },
+      "CaseCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_number": {
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Case Number",
+            "type": "string"
+          },
+          "cause_value": {
+            "description": "Valor da causa positivo, em reais, exigido pelo motor da B1.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000000000.0,
+            "minimum": 0.0,
+            "title": "Cause Value",
+            "type": "number"
+          },
+          "claimant_name": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Claimant Name",
+            "type": "string"
+          },
+          "claims": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Claims",
+            "type": "array"
+          },
+          "defendant_name": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Defendant Name",
+            "type": "string"
+          },
+          "sub_issue": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Sub Issue",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          },
+          "uf": {
+            "enum": [
+              "AC",
+              "AL",
+              "AM",
+              "AP",
+              "BA",
+              "CE",
+              "DF",
+              "ES",
+              "GO",
+              "MA",
+              "MG",
+              "MS",
+              "MT",
+              "PA",
+              "PB",
+              "PE",
+              "PI",
+              "PR",
+              "RJ",
+              "RN",
+              "RO",
+              "RR",
+              "RS",
+              "SC",
+              "SE",
+              "SP",
+              "TO"
+            ],
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_number",
+          "title",
+          "uf",
+          "sub_issue",
+          "cause_value",
+          "claimant_name",
+          "defendant_name",
+          "claims"
+        ],
+        "title": "CaseCreateRequest",
+        "type": "object"
+      },
       "CaseDetail": {
         "properties": {
           "case_number": {
@@ -85,9 +223,28 @@
             "type": "string"
           },
           "cause_value": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Cause Value",
             "type": "number"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "claimant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimant Name"
           },
           "claims": {
             "items": {
@@ -95,6 +252,17 @@
             },
             "title": "Claims",
             "type": "array"
+          },
+          "court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court"
           },
           "data_mode": {
             "enum": [
@@ -106,6 +274,17 @@
             "title": "Data Mode",
             "type": "string"
           },
+          "defendant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defendant Name"
+          },
           "documents": {
             "items": {
               "$ref": "#/components/schemas/CaseDocument"
@@ -113,10 +292,22 @@
             "title": "Documents",
             "type": "array"
           },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
           "id": {
             "exclusiveMinimum": 0.0,
             "title": "Id",
             "type": "integer"
+          },
+          "is_simulated": {
+            "default": true,
+            "title": "Is Simulated",
+            "type": "boolean"
           },
           "recommendation": {
             "anyOf": [
@@ -202,6 +393,11 @@
             ],
             "title": "Uf",
             "type": "string"
+          },
+          "version": {
+            "default": 0,
+            "title": "Version",
+            "type": "integer"
           }
         },
         "required": [
@@ -243,8 +439,18 @@
                 "type": "null"
               }
             ],
-            "description": "Null enquanto o arquivo não estiver disponível para download.",
+            "description": "URL relativa para o PDF original; null quando não há arquivo disponível.",
             "title": "Download Url"
+          },
+          "extraction_status": {
+            "default": "unavailable",
+            "enum": [
+              "ok",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Extraction Status",
+            "type": "string"
           },
           "id": {
             "title": "Id",
@@ -253,6 +459,22 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "page_count": {
+            "default": 0,
+            "title": "Page Count",
+            "type": "integer"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
           },
           "text_excerpt": {
             "anyOf": [
@@ -335,6 +557,7 @@
             "type": "string"
           },
           "cause_value": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Cause Value",
             "type": "number"
@@ -454,6 +677,745 @@
         "title": "CaseSummary",
         "type": "object"
       },
+      "ChatHistoryMessage": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "role",
+          "content",
+          "sources",
+          "created_at"
+        ],
+        "title": "ChatHistoryMessage",
+        "type": "object"
+      },
+      "ChatHistoryResponse": {
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatHistoryMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "session_id",
+          "messages"
+        ],
+        "title": "ChatHistoryResponse",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "message": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          }
+        },
+        "required": [
+          "case_id",
+          "message"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "ChatResponse": {
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "generation_mode": {
+            "enum": [
+              "local",
+              "openai"
+            ],
+            "title": "Generation Mode",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "session_id",
+          "answer",
+          "sources",
+          "generation_mode",
+          "warnings"
+        ],
+        "title": "ChatResponse",
+        "type": "object"
+      },
+      "ChatSessionListResponse": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChatSessionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "has_more",
+          "items"
+        ],
+        "title": "ChatSessionListResponse",
+        "type": "object"
+      },
+      "ChatSessionSummary": {
+        "properties": {
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "message_count": {
+            "minimum": 0.0,
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "title": {
+            "description": "Início da primeira mensagem do usuário, sem geração por IA.",
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "case_id",
+          "title",
+          "message_count",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatSessionSummary",
+        "type": "object"
+      },
+      "DecisionListResponse": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionRecord"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "has_more"
+        ],
+        "title": "DecisionListResponse",
+        "type": "object"
+      },
+      "DecisionRecord": {
+        "properties": {
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalyzeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decision": {
+            "$ref": "#/components/schemas/DecisionResponse"
+          },
+          "registration": {
+            "$ref": "#/components/schemas/DecisionRequest"
+          }
+        },
+        "required": [
+          "decision",
+          "registration",
+          "analysis"
+        ],
+        "title": "DecisionRecord",
+        "type": "object"
+      },
+      "DecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "analysis_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "expected_case_version": {
+            "minimum": 0.0,
+            "title": "Expected Case Version",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "law_firm_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Law Firm Id",
+            "type": "string"
+          },
+          "lawyer_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Lawyer Id",
+            "type": "string"
+          },
+          "override_reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 5,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Reason"
+          },
+          "settlement_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Amount"
+          }
+        },
+        "required": [
+          "case_id",
+          "action",
+          "lawyer_id",
+          "law_firm_id",
+          "expected_case_version"
+        ],
+        "title": "DecisionRequest",
+        "type": "object"
+      },
+      "DecisionResponse": {
+        "properties": {
+          "action": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "case_version": {
+            "title": "Case Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision_id": {
+            "format": "uuid",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "is_override": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Override"
+          },
+          "settlement_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Amount"
+          }
+        },
+        "required": [
+          "decision_id",
+          "case_id",
+          "action",
+          "settlement_amount",
+          "is_override",
+          "case_version",
+          "created_at"
+        ],
+        "title": "DecisionResponse",
+        "type": "object"
+      },
+      "DocumentCheck": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "consistent",
+              "divergent",
+              "not_verified"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "status",
+          "message",
+          "sources"
+        ],
+        "title": "DocumentCheck",
+        "type": "object"
+      },
+      "DocumentContent": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/CaseDocument"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentPage"
+            },
+            "title": "Pages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document",
+          "pages",
+          "facts"
+        ],
+        "title": "DocumentContent",
+        "type": "object"
+      },
+      "DocumentPage": {
+        "properties": {
+          "number": {
+            "title": "Number",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "text"
+        ],
+        "title": "DocumentPage",
+        "type": "object"
+      },
+      "DraftListResponse": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DraftSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "has_more",
+          "items"
+        ],
+        "title": "DraftListResponse",
+        "type": "object"
+      },
+      "DraftRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "format": {
+            "default": "formal",
+            "enum": [
+              "formal",
+              "whatsapp"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "settlement_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Amount"
+          }
+        },
+        "required": [
+          "case_id",
+          "action"
+        ],
+        "title": "DraftRequest",
+        "type": "object"
+      },
+      "DraftResponse": {
+        "properties": {
+          "attached_subsidies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attached Subsidies",
+            "type": "array"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "content_markdown": {
+            "title": "Content Markdown",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "draft_id": {
+            "format": "uuid",
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "generation_mode": {
+            "enum": [
+              "local",
+              "openai"
+            ],
+            "title": "Generation Mode",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "const": "review_required",
+            "default": "review_required",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft_id",
+          "case_id",
+          "document_type",
+          "title",
+          "content_markdown",
+          "attached_subsidies",
+          "sources",
+          "generation_mode",
+          "created_at"
+        ],
+        "title": "DraftResponse",
+        "type": "object"
+      },
+      "DraftSummary": {
+        "properties": {
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "draft_id": {
+            "format": "uuid",
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "generation_mode": {
+            "enum": [
+              "local",
+              "openai"
+            ],
+            "title": "Generation Mode",
+            "type": "string"
+          },
+          "status": {
+            "const": "review_required",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft_id",
+          "case_id",
+          "status",
+          "document_type",
+          "title",
+          "generation_mode",
+          "created_at"
+        ],
+        "title": "DraftSummary",
+        "type": "object"
+      },
       "ErrorResponse": {
         "properties": {
           "detail": {
@@ -467,6 +1429,65 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "ExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "content_markdown": {
+            "anyOf": [
+              {
+                "maxLength": 60000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Markdown"
+          },
+          "draft_id": {
+            "format": "uuid",
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "format": {
+            "default": "pdf",
+            "enum": [
+              "pdf",
+              "html"
+            ],
+            "title": "Format",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft_id"
+        ],
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "ExtractedFact": {
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceReference"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "source"
+        ],
+        "title": "ExtractedFact",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -478,6 +1499,38 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MetricsResponse": {
+        "properties": {
+          "decision_count": {
+            "title": "Decision Count",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "message": {
+            "default": "Aguardando os indicadores validados da branch 4.",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "pending_integration",
+            "default": "pending_integration",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_count"
+        ],
+        "title": "MetricsResponse",
         "type": "object"
       },
       "MonitoringOverviewResponse": {
@@ -545,6 +1598,7 @@
           "total_cost_avoidance": {
             "anyOf": [
               {
+                "maximum": 1000000000000.0,
                 "minimum": 0.0,
                 "type": "number"
               },
@@ -565,6 +1619,93 @@
           "data_mode"
         ],
         "title": "MonitoringOverviewResponse",
+        "type": "object"
+      },
+      "NegotiationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "proposed_amount": {
+            "maximum": 1000000000000.0,
+            "minimum": 0.0,
+            "title": "Proposed Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "case_id",
+          "proposed_amount"
+        ],
+        "title": "NegotiationRequest",
+        "type": "object"
+      },
+      "NegotiationResponse": {
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "pricing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettlementPricing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposed_amount": {
+            "maximum": 1000000000000.0,
+            "minimum": 0.0,
+            "title": "Proposed Amount",
+            "type": "number"
+          },
+          "requires_approval": {
+            "title": "Requires Approval",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "SEM_POLITICA",
+              "SEM_FAIXA",
+              "ABAIXO_PISO",
+              "NA_FAIXA",
+              "ACIMA_TETO"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "within_ceiling": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Within Ceiling"
+          }
+        },
+        "required": [
+          "case_id",
+          "status",
+          "proposed_amount",
+          "within_ceiling",
+          "requires_approval",
+          "pricing",
+          "explanation"
+        ],
+        "title": "NegotiationResponse",
         "type": "object"
       },
       "PolicyResult": {
@@ -644,24 +1785,100 @@
         "title": "PolicyResult",
         "type": "object"
       },
+      "ScenarioArgument": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceReference"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sources"
+        ],
+        "title": "ScenarioArgument",
+        "type": "object"
+      },
+      "ScenariosResponse": {
+        "properties": {
+          "author_arguments": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioArgument"
+            },
+            "title": "Author Arguments",
+            "type": "array"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "defense_arguments": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioArgument"
+            },
+            "title": "Defense Arguments",
+            "type": "array"
+          },
+          "generation_mode": {
+            "enum": [
+              "local",
+              "openai"
+            ],
+            "title": "Generation Mode",
+            "type": "string"
+          },
+          "judicial_outlook": {
+            "title": "Judicial Outlook",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "author_arguments",
+          "defense_arguments",
+          "judicial_outlook",
+          "limitations",
+          "generation_mode"
+        ],
+        "title": "ScenariosResponse",
+        "type": "object"
+      },
       "SettlementPricing": {
         "properties": {
           "ceiling": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Ceiling",
             "type": "number"
           },
           "expected_loss": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Expected Loss",
             "type": "number"
           },
           "floor": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Floor",
             "type": "number"
           },
           "target": {
+            "maximum": 1000000000000.0,
             "minimum": 0.0,
             "title": "Target",
             "type": "number"
@@ -674,6 +1891,132 @@
           "expected_loss"
         ],
         "title": "SettlementPricing",
+        "type": "object"
+      },
+      "SourceReference": {
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "document_name": {
+            "title": "Document Name",
+            "type": "string"
+          },
+          "excerpt": {
+            "title": "Excerpt",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "document_id",
+          "document_name",
+          "page",
+          "excerpt"
+        ],
+        "title": "SourceReference",
+        "type": "object"
+      },
+      "StoredAnalysisResponse": {
+        "properties": {
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalyzeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Último parecer persistido, sem executar IA. stale indica versão diferente do caso; o parecer é histórico e não deve definir a alçada atual."
+          },
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "case_version": {
+            "minimum": 0.0,
+            "title": "Case Version",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "stale",
+              "not_found"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_version",
+          "status",
+          "analysis"
+        ],
+        "title": "StoredAnalysisResponse",
+        "type": "object"
+      },
+      "SubsidiesInventoryResponse": {
+        "properties": {
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "missing_by_type": {
+            "additionalProperties": {
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "propertyNames": {
+              "enum": [
+                "has_contract",
+                "has_statement",
+                "has_credit_receipt",
+                "has_dossier",
+                "has_debt_evolution",
+                "has_referenced_report"
+              ]
+            },
+            "title": "Missing By Type",
+            "type": "object"
+          },
+          "scope": {
+            "const": "document_inventory",
+            "default": "document_inventory",
+            "title": "Scope",
+            "type": "string"
+          },
+          "total_cases": {
+            "minimum": 0.0,
+            "title": "Total Cases",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_cases",
+          "missing_by_type",
+          "data_mode"
+        ],
+        "title": "SubsidiesInventoryResponse",
         "type": "object"
       },
       "SubsidyPresence": {
@@ -757,15 +2100,15 @@
     }
   },
   "info": {
-    "description": "Fase 1 da branch 2: contratos HTTP com dados fictícios. Todas as respostas de dados incluem data_mode=mock. Não há leitura da base de 60 mil casos ou chamadas à OpenAI nesta fase.",
+    "description": "Documentos dos casos do hackathon, copiloto, minutas e persistência. data_mode distingue artifacts, mock e manual; generation_mode identifica local ou openai. Política e indicadores financeiros ficam indisponíveis até a integração dos motores.",
     "title": "Suits AI — Backend",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/analyze": {
       "post": {
-        "description": "Fase 1: resposta fixa de demonstração, sem IA ou modelo de risco.",
+        "description": "Persiste o parecer com suas fontes. policy=null enquanto o motor da branch 1 não estiver integrado.",
         "operationId": "analyze_case_api_analyze_post",
         "requestBody": {
           "content": {
@@ -809,7 +2152,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Obter parecer simulado para um caso",
+        "summary": "Analisar documentos e consultar a política disponível",
         "tags": [
           "Análise"
         ]
@@ -935,6 +2278,45 @@
         "tags": [
           "Casos"
         ]
+      },
+      "post": {
+        "operationId": "create_case_api_cases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Case",
+        "tags": [
+          "Casos"
+        ]
       }
     },
     "/api/cases/{case_id}": {
@@ -990,6 +2372,665 @@
         ]
       }
     },
+    "/api/cases/{case_id}/analysis": {
+      "get": {
+        "operationId": "stored_analysis_api_cases__case_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recuperar o último parecer sem executar nova análise",
+        "tags": [
+          "Análise"
+        ]
+      }
+    },
+    "/api/cases/{case_id}/chat/{session_id}": {
+      "get": {
+        "operationId": "history_api_cases__case_id__chat__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatHistoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History",
+        "tags": [
+          "Copiloto"
+        ]
+      }
+    },
+    "/api/cases/{case_id}/chats": {
+      "get": {
+        "operationId": "chat_sessions_api_cases__case_id__chats_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Listar conversas salvas do caso",
+        "tags": [
+          "Copiloto"
+        ]
+      }
+    },
+    "/api/cases/{case_id}/documents/{document_id}": {
+      "get": {
+        "operationId": "document_api_cases__case_id__documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentContent"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Document",
+        "tags": [
+          "Documentos"
+        ]
+      }
+    },
+    "/api/cases/{case_id}/documents/{document_id}/download": {
+      "get": {
+        "operationId": "download_api_cases__case_id__documents__document_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download",
+        "tags": [
+          "Documentos"
+        ]
+      }
+    },
+    "/api/cases/{case_id}/drafts": {
+      "get": {
+        "operationId": "saved_drafts_api_cases__case_id__drafts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Listar minutas salvas do caso",
+        "tags": [
+          "Minutas"
+        ]
+      }
+    },
+    "/api/chat": {
+      "post": {
+        "operationId": "chat_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Chat",
+        "tags": [
+          "Copiloto"
+        ]
+      }
+    },
+    "/api/decisions": {
+      "get": {
+        "operationId": "decisions_api_decisions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decisions",
+        "tags": [
+          "Decisões"
+        ]
+      },
+      "post": {
+        "operationId": "record_decision_api_decisions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Decision",
+        "tags": [
+          "Decisões"
+        ]
+      }
+    },
+    "/api/drafts/{draft_id}": {
+      "get": {
+        "operationId": "get_draft_api_drafts__draft_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draft_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Draft Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Draft",
+        "tags": [
+          "Minutas"
+        ]
+      }
+    },
+    "/api/export-pdf": {
+      "post": {
+        "operationId": "export_api_export_pdf_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export",
+        "tags": [
+          "Minutas"
+        ]
+      }
+    },
+    "/api/generate-draft": {
+      "post": {
+        "operationId": "generate_draft_api_generate_draft_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Draft",
+        "tags": [
+          "Minutas"
+        ]
+      }
+    },
+    "/api/monitoring/adherence": {
+      "get": {
+        "operationId": "adherence_api_monitoring_adherence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Adherence",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    },
+    "/api/monitoring/effectiveness": {
+      "get": {
+        "operationId": "effectiveness_api_monitoring_effectiveness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Effectiveness",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    },
     "/api/monitoring/overview": {
       "get": {
         "operationId": "overview_api_monitoring_overview_get",
@@ -1005,9 +3046,112 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Consultar visão geral simulada",
+        "summary": "Consultar visão geral operacional",
         "tags": [
           "Monitoramento"
+        ]
+      }
+    },
+    "/api/monitoring/subsidies": {
+      "get": {
+        "operationId": "subsidies_api_monitoring_subsidies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubsidiesInventoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Subsidies",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    },
+    "/api/negotiation-copilot": {
+      "post": {
+        "operationId": "negotiation_api_negotiation_copilot_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NegotiationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NegotiationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Negotiation",
+        "tags": [
+          "Decisões"
+        ]
+      }
+    },
+    "/api/scenarios": {
+      "post": {
+        "operationId": "scenarios_api_scenarios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenariosResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scenarios",
+        "tags": [
+          "Copiloto"
         ]
       }
     }

@@ -98,9 +98,9 @@ Cada equipe deve submeter **neste repositório**:
 ```
 ├── src/                  # código-fonte da solução
 ├── data/                 # dados de exemplo (não inclua dados sensíveis)
-├── docs/                 # apresentação final e documentação
-│   └── presentation.*    # slides ou documento para a apresentação
-├── SETUP.md              # instruções de instalação e execução
+├── artefacts/suits_docs/ # apresentação final e documentação
+│   ├── presentation.md  # slides ou documento para a apresentação
+│   └── SETUP.md         # instruções de instalação e execução
 └── README.md             # este arquivo (pode ser complementado)
 ```
 
@@ -159,7 +159,7 @@ Acesse [github.com/talismanai/hackathon-ufmg-2026](https://github.com/talismanai
 git clone https://github.com/<seu-usuario>/hackathon-ufmg-2026-grupo<N>.git
 cd hackathon-ufmg-2026-grupo<N>
 
-# Configure o ambiente seguindo o SETUP.md
+# Configure o ambiente seguindo artefacts/suits_docs/SETUP.md
 ```
 
 ### 3. Submeta

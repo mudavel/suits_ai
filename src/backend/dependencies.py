@@ -2,27 +2,22 @@
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 
 from src.backend.schemas import CaseDetail
 from src.backend.services.contracts import AnalysisService, CaseService, MonitoringService
-from src.backend.services.mocks import (
-    MockAnalysisService,
-    MockCaseService,
-    MockMonitoringService,
-)
 
 
-def get_case_service() -> CaseService:
-    return MockCaseService()
+def get_case_service(request: Request) -> CaseService:
+    return request.app.state.store
 
 
-def get_analysis_service() -> AnalysisService:
-    return MockAnalysisService()
+def get_analysis_service(request: Request) -> AnalysisService:
+    return request.app.state.analysis
 
 
-def get_monitoring_service() -> MonitoringService:
-    return MockMonitoringService()
+def get_monitoring_service(request: Request) -> MonitoringService:
+    return request.app.state.monitoring
 
 
 Cases = Annotated[CaseService, Depends(get_case_service)]

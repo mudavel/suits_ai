@@ -1,6 +1,7 @@
 # Setup e Execução — Suits AI (EnterOS)
 
-Guia completo para configuração do ambiente, execução de testes e inicialização da aplicação.
+Guia para configuração do ambiente, execução de testes e inicialização da aplicação.
+Execute os comandos a partir da raiz do repositório, salvo quando indicado outro diretório.
 
 ---
 
@@ -33,18 +34,40 @@ Guia completo para configuração do ambiente, execução de testes e inicializa
 
 4. Configure as variáveis de ambiente:
    ```bash
-   cp .env.example .env
-   # Edite o .env se desejar customizar porta, host ou chave da OpenAI
+   # Crie somente se ainda não houver um .env:
+   test -f .env || cp .env.example .env
+   # Edite API_HOST, API_PORT, APP_ENV e as opções SUITS_* conforme necessário
    ```
 
 ---
+
+No Windows (PowerShell), os mesmos passos podem ser executados sem `uv`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+.\.venv\Scripts\python.exe run.py
+```
+
+O `.env` fica na raiz e é carregado sem substituir variáveis do processo.
+O padrão `SUITS_AI_MODE=local` permite testar sem chave. Para usar GPT-6 Astra,
+preencha `OPENAI_API_KEY` e selecione `SUITS_AI_MODE=openai`; reinicie a API
+depois de alterar a configuração. O PDF usa ReportLab, instalado pelo mesmo
+`requirements.txt`, sem instalação de Pango ou WeasyPrint.
+
+Com `SUITS_DATA_MODE=artifacts`, a inicialização cadastra os dois casos dos ZIPs
+em um SQLite local. O arquivo padrão é `src/backend/.local/suits.sqlite3`.
+Preserve `SUITS_DATABASE_PATH` de instalações existentes; caso usasse
+`backend/.local/suits.sqlite3`, configure esse caminho explicitamente para
+continuar usando o histórico. A planilha de 60 mil casos não é importada.
 
 ## 3. Execução dos Testes Automatizados
 
 Para rodar a suíte completa de testes unitários e de integração (Policy Engine, Pricing, Monitoramento e API FastAPI):
 
 ```bash
-pytest
+python -B -m pytest -q
 ```
 
 ---
@@ -76,6 +99,13 @@ npm run dev
 
 ---
 
+Para testar pelo Swagger, execute primeiro `GET /api/cases` e escolha um ID.
+`POST /api/analyze` recebe `{"case_id": 2}`; `GET /api/cases/2/analysis`
+recupera o parecer salvo. `POST /api/chat` recebe `case_id` e `message`.
+No modo `openai`, as rotas de geração fazem chamadas à API configurada.
+Os demais corpos e respostas estão detalhados no Swagger e no
+[README do backend](../../src/backend/README.md).
+
 ## 5. Estrutura do Projeto
 
 ```
@@ -89,9 +119,14 @@ suits_ai/
 ├── data/                # Bases de dados operacionais e amostras (.csv)
 ├── scripts/             # Pipelines de dados, treino do modelo e simulações
 ├── artefacts/           # Insumos brutos, documentações e modelos (.pkl, .json)
-│   ├── Hackaton Unicamp/# Planilhas, PDFs e ZIPs dos casos
-│   └── suits_docs/      # Documentação oficial, especificações e FILETREE.md
-├── docs/                # Slides executivos, apresentação e pitch
+│   ├── Hackaton Unicamp/ # Planilhas, PDFs e ZIPs dos casos
+│   └── suits_docs/      # Setup, especificações, apresentação e modelos
+│       ├── SETUP.md     # Este guia de instalação e execução
+│       ├── FILETREE.md  # Estrutura de referência
+│       ├── SPEC.md      # Contratos técnicos
+│       ├── ROADMAP.md   # Cronograma e divisões
+│       ├── SOLUTION.md  # Arquitetura da solução
+│       └── presentation.md # Apresentação executiva
 ├── requirements.txt     # Dependências unificadas do projeto
 ├── pytest.ini           # Configuração unificada do Pytest
 ├── run.py               # Orquestrador de execução da aplicação

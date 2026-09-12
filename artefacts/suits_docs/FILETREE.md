@@ -62,6 +62,9 @@ suits_ai/
 │   ├── Hackaton Unicamp/              # Planilhas, PDFs e ZIPs dos casos
 │   └── suits_docs/                    # Documentos históricos, especificações e modelos
 │       ├── FILETREE.md                # Este documento de referência
+│       ├── SETUP.md                   # Guia de instalação e execução
+│       ├── README.md                  # Entregáveis e documentação
+│       ├── presentation.md            # Apresentação executiva
 │       ├── ROADMAP.md                 # Cronograma de desenvolvimento
 │       ├── SPEC.md                    # Especificações técnicas e contratos
 │       ├── SOLUTION.md                # Solução arquitetural e matemática
@@ -71,19 +74,11 @@ suits_ai/
 │       ├── features.json              # Metadados de features do modelo
 │       └── baseline_stats.json        # Estatísticas de baseline histórico
 │
-├── docs/                              # 📑 Entregas executivas
-│   ├── presentation.md                # Roteiro/Slides da apresentação (15 min)
-│   └── README.md
-│
 ├── .env.example                       # Modelo de variáveis de ambiente
 ├── pytest.ini                         # Configuração global de testes
 ├── requirements.txt                   # Dependências unificadas do projeto
 ├── run.py                             # 🚀 Orquestrador (python run.py sobe o FastAPI)
-├── README.md                          # Visão geral da solução
-├── SETUP.md                           # Guia de instalação e execução
-├── SPEC.md                            # Especificação técnica dos contratos
-├── ROADMAP.md                         # Cronograma e divisões
-└── SOLUTION.md                        # Arquitetura e formulação matemática
+└── README.md                          # Visão geral da solução
 ```
 
 ---
