@@ -5,6 +5,7 @@ import LoginPage from './pages/Login/LoginPage'
 import CaseSelectionPage from './pages/CaseSelection/CaseSelectionPage'
 import WorkspacePage from './pages/Workspace/WorkspacePage'
 import MonitoringPage from './pages/Monitoring/MonitoringPage'
+import SimulationPage from './pages/Simulation/SimulationPage'
 import NotFoundPage from './pages/NotFound/NotFoundPage'
 import RoleRoute from './components/Auth/RoleRoute'
 
@@ -26,8 +27,16 @@ export default function App() {
             <Route
               path="/monitoramento"
               element={
-                <RoleRoute allowedRoles={['BANK']}>
+                <RoleRoute allowedRoles={['BANK', 'FDE']}>
                   <MonitoringPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/simulacao"
+              element={
+                <RoleRoute allowedRoles={['BANK', 'FDE']}>
+                  <SimulationPage />
                 </RoleRoute>
               }
             />

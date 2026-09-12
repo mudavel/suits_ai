@@ -1,6 +1,11 @@
-"""Schemas Pydantic para contratos de dados do Cockpit de Governança, Aderência e Efetividade (EnterOS)."""
+"""Schemas Pydantic para contratos de dados do Cockpit de Governança, Aderência e Efetividade (EnterOS).
 
-from typing import Dict, List, Optional, Any
+Distingue explicitamente:
+1. Projeção Contrafactual (Treinada nos 60.000 casos históricos)
+2. Operação em Tempo Real (Decisões transacionais e casos novos)
+"""
+
+from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field
 
 
@@ -81,6 +86,33 @@ class SubsidiesDiagnostic(BaseModel):
     bottlenecks: List[SubsidyBottleneck]
 
 
+# =====================================================================
+# Separação Explícita: Contrafactual (Histórico 60k) vs Realtime (Novos)
+# =====================================================================
+
+class HistoricalCounterfactualSummary(BaseModel):
+    """Projeção atuarial baseada na massa histórica de 60.000 sentenças."""
+    scope: Literal["BASE_HISTORICA_60K"] = "BASE_HISTORICA_60K"
+    baseline_total_cases: int = 60000
+    baseline_total_losses_brl: float = 192982862.07
+    baseline_avg_condemnation_ticket_brl: float = 10658.35
+    projected_annual_cost_avoidance_brl: float = 58400000.0
+    projected_roi_multiple: float = 2.47
+    sensitivity_curve: List[AcceptanceSensitivity] = Field(default_factory=list)
+
+
+class RealtimeProductionSummary(BaseModel):
+    """Métricas operacionais transacionais dos casos em andamento/concluídos."""
+    scope: Literal["CASOS_TRANSACIONAIS_REAIS"] = "CASOS_TRANSACIONAIS_REAIS"
+    total_new_cases: int = 0
+    decisions_recorded: int = 0
+    active_lawyers_count: int = 0
+    partner_law_firms_count: int = 0
+    realized_adherence_rate: float = 0.0
+    realized_overrides_count: int = 0
+    realized_cost_avoidance_brl: float = 0.0
+
+
 class GovernanceOverview(BaseModel):
     total_cases: int
     global_adherence_rate: float
@@ -92,3 +124,5 @@ class GovernanceOverview(BaseModel):
     adherence_summary: AdherenceMetrics
     effectiveness_summary: EffectivenessMetrics
     subsidies_diagnostic: SubsidiesDiagnostic
+    historical_counterfactual: Optional[HistoricalCounterfactualSummary] = None
+    realtime_production: Optional[RealtimeProductionSummary] = None

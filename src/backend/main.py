@@ -55,6 +55,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(analysis.router)
     app.include_router(monitoring.router)
     app.include_router(workflow.router)
+
+    @app.get("/health", tags=["Health"], summary="Health Check")
+    async def health_check():
+        return {
+            "status": "healthy",
+            "message": "Processo saudando normalmente. Suits AI — EnterOS Backend v0.2.0",
+            "version": "0.2.0",
+            "data_mode": settings.data_mode,
+        }
+
+    @app.get("/api/health", tags=["Health"], summary="API Health Check")
+    async def health_check():
+        return {
+            "status": "healthy",
+            "app": "Suits AI — EnterOS Backend",
+            "data_mode": settings.data_mode,
+            "policy_mode": settings.policy_mode,
+            "ai_mode": settings.ai_mode,
+        }
+
     return app
 
 

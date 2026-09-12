@@ -2989,6 +2989,25 @@
         ]
       }
     },
+    "/api/health": {
+      "get": {
+        "operationId": "health_check_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "API Health Check",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
     "/api/monitoring/adherence": {
       "get": {
         "operationId": "adherence_api_monitoring_adherence_get",
@@ -3152,6 +3171,25 @@
         "summary": "Scenarios",
         "tags": [
           "Copiloto"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check",
+        "tags": [
+          "Health"
         ]
       }
     }

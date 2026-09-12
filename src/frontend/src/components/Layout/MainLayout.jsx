@@ -26,7 +26,7 @@ export default function MainLayout() {
   const handleProfileSwitch = (role) => {
     switchProfile(role)
     setProfileDropdownOpen(false)
-    if (role === 'LAWYER' && location.pathname === '/monitoramento') navigate('/triagem')
+    if (role === 'LAWYER' && (location.pathname === '/monitoramento' || location.pathname === '/simulacao')) navigate('/triagem')
   }
 
   return (
@@ -37,7 +37,12 @@ export default function MainLayout() {
         <nav className="main-nav" aria-label="Navegação principal">
           <NavLink to="/triagem" className={({ isActive }) => isActive || location.pathname === '/cases' ? 'nav-item active' : 'nav-item'}>Processos</NavLink>
           {currentProfile.id === 'LAWYER' && location.pathname.startsWith('/workspace/') && <NavLink to={location.pathname} className="nav-item active">Análise do processo</NavLink>}
-          {currentProfile.id === 'BANK' && <NavLink to="/monitoramento" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Governança</NavLink>}
+          {(currentProfile.id === 'BANK' || currentProfile.id === 'FDE') && (
+            <>
+              <NavLink to="/monitoramento" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Governança</NavLink>
+              <NavLink to="/simulacao" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Simulação 60k (FDE)</NavLink>
+            </>
+          )}
         </nav>
         <div className="header-actions">
           <span className="demo-label"><span className="status-dot" /> Demonstração</span>

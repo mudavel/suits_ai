@@ -266,7 +266,7 @@ def generate_governance_summary_json(df_enriched: pd.DataFrame, output_path: str
         },
     }
     
-    out_dir = os.path.dirname(output_dir) if os.path.isfile(output_dir) else output_dir
+    out_dir = os.path.dirname(output_path) if os.path.splitext(output_path)[1] else output_path
     os.makedirs(out_dir, exist_ok=True)
     
     # Salva apenas tabelas CSV de governança

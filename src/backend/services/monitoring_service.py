@@ -9,11 +9,14 @@ class OperationalMonitoring:
         counts = await self.store.counts()
         mock = self.store.data_mode == "mock"
         return MonitoringOverviewResponse(
-            total_cases=counts["total_cases"], active_lawyers_count=counts["active_lawyers_count"],
+            total_cases=counts["total_cases"],
+            active_lawyers_count=counts["active_lawyers_count"],
             partner_law_firms_count=counts["partner_law_firms_count"],
-            adherence_rate=0 if mock else None, total_cost_avoidance=0 if mock else None,
+            adherence_rate=0 if mock else None,
+            total_cost_avoidance=0 if mock else None,
             avg_negotiation_time_days=0 if mock else None,
-            data_mode=self.store.data_mode, metrics_status="mock" if mock else "partial",
+            data_mode=self.store.data_mode,
+            metrics_status="mock" if mock else "partial",
         )
 
     async def adherence(self) -> MetricsResponse:
@@ -36,5 +39,8 @@ class OperationalMonitoring:
             if page >= result.total_pages:
                 break
             page += 1
-        return SubsidiesInventoryResponse(total_cases=total_cases, missing_by_type=totals,
-                data_mode=self.store.data_mode)
+        return SubsidiesInventoryResponse(
+            total_cases=total_cases,
+            missing_by_type=totals,
+            data_mode=self.store.data_mode,
+        )

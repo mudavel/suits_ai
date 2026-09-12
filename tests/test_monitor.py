@@ -128,3 +128,76 @@ def test_governance_artifacts_exist():
     assert len(df_sample) == 120
     assert "partner_law_firm" in df_sample.columns
 
+
+def test_calculate_adherence_metrics(mock_raw_dataframe):
+    """Testa o cálculo da suíte completa de métricas de aderência A01-A10."""
+    from src.monitor.metrics_adherence import calculate_adherence_metrics
+    
+    enriched = enrich_dataset_with_governance(mock_raw_dataframe.copy(), seed=42)
+    metrics = calculate_adherence_metrics(enriched)
+    
+    assert "A01_overall_adherence_rate" in metrics
+    assert "A02_overall_override_rate" in metrics
+    assert "A03_law_firms_adherence" in metrics
+    assert "A04_lawyers_adherence" in metrics
+    assert "A05_override_reasons_distribution" in metrics
+    assert "A10_governance_score" in metrics
+    
+    assert 0 <= metrics["A01_overall_adherence_rate"] <= 100
+    assert 0 <= metrics["A02_overall_override_rate"] <= 100
+    assert len(metrics["A03_law_firms_adherence"]) > 0
+    assert len(metrics["A05_override_reasons_distribution"]) > 0
+
+
+def test_calculate_effectiveness_metrics(mock_raw_dataframe):
+    """Testa o cálculo da suíte de métricas de efetividade e ROI E01-E10."""
+    from src.monitor.metrics_effectiveness import calculate_effectiveness_metrics
+    
+    enriched = enrich_dataset_with_governance(mock_raw_dataframe.copy(), seed=42)
+    metrics = calculate_effectiveness_metrics(
+        enriched,
+        target_discount_rate=0.50,
+        author_acceptance_rate=0.65,
+        lawyer_adherence_rate=0.90,
+        court_costs_and_fees_pct=0.15,
+    )
+    
+    assert "E01_gross_cost_avoidance" in metrics
+    assert "E02_net_cost_avoidance" in metrics
+    assert "E03_savings_margin_percentage" in metrics
+    assert "E04_roi_multiple" in metrics
+    assert "E08_sensitivity_curve" in metrics
+    assert len(metrics["E08_sensitivity_curve"]) == 8  # 30% a 90%
+    assert metrics["E04_roi_multiple"] > 0
+
+
+def test_simulate_uf_savings(mock_raw_dataframe):
+    """Testa a simulação contrafactual regionalizada por UF (Desafio 2)."""
+    from src.monitor.counterfactual import simulate_uf_savings
+    
+    sp_sim = simulate_uf_savings(mock_raw_dataframe, uf_target="SP")
+    assert sp_sim["uf"] == "SP"
+    assert sp_sim["total_cases"] > 0
+    assert "net_cost_avoidance" in sp_sim
+    assert len(sp_sim["sensitivity_curve"]) > 0
+    
+    # UF inexistente
+    xx_sim = simulate_uf_savings(mock_raw_dataframe, uf_target="XX")
+    assert xx_sim["uf"] == "XX"
+    assert xx_sim["total_cases"] == 0
+    assert xx_sim["net_cost_avoidance"] == 0.0
+
+
+def test_court_costs_and_fees_increase_savings(mock_raw_dataframe):
+    """Testa se a inclusão de honorários de sucumbência aumenta adequadamente o Cost Avoidance."""
+    from src.monitor.metrics_effectiveness import calculate_effectiveness_metrics
+    
+    enriched = enrich_dataset_with_governance(mock_raw_dataframe.copy(), seed=42)
+    base_metrics = calculate_effectiveness_metrics(enriched, court_costs_and_fees_pct=0.0)
+    with_fees_metrics = calculate_effectiveness_metrics(enriched, court_costs_and_fees_pct=0.15)
+    
+    assert with_fees_metrics["E01_gross_cost_avoidance"] > base_metrics["E01_gross_cost_avoidance"]
+    assert with_fees_metrics["E02_net_cost_avoidance"] > base_metrics["E02_net_cost_avoidance"]
+
+
+
