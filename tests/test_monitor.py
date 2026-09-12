@@ -109,24 +109,22 @@ def test_enrich_dataset_with_governance(mock_raw_dataframe):
         assert overrides["override_reason"].notna().all()
 
 
-def test_governance_json_artifacts_exist():
-    """Valida se os arquivos gerados pela pipeline da Fase 1 existem e são válidos."""
-    json_path = "data/governance_metrics.json"
-    sample_path = "data/cases_sample_120.json"
+def test_governance_artifacts_exist():
+    """Valida se os arquivos gerados pela pipeline da Fase 1 em CSV existem e são válidos."""
+    firms_path = "data/governance_law_firms.csv"
+    sample_path = "data/cases_sample_120.csv"
+    sensitivity_path = "data/governance_sensitivity_curve.csv"
     
-    assert os.path.exists(json_path), "Arquivo governance_metrics.json não foi gerado!"
-    assert os.path.exists(sample_path), "Arquivo cases_sample_120.json não foi gerado!"
+    assert os.path.exists(firms_path), "Arquivo governance_law_firms.csv não foi gerado!"
+    assert os.path.exists(sample_path), "Arquivo cases_sample_120.csv não foi gerado!"
+    assert os.path.exists(sensitivity_path), "Arquivo governance_sensitivity_curve.csv não foi gerado!"
     
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
-        assert "overview" in data
-        assert "counterfactual_simulation" in data
-        assert "law_firms_adherence" in data
-        assert len(data["law_firms_adherence"]) == 5
-        assert data["overview"]["total_cases"] == 60000
-        assert data["overview"]["global_adherence_rate"] > 70.0
-        
-    with open(sample_path, encoding="utf-8") as f:
-        samples = json.load(f)
-        assert len(samples) == 120
-        assert "partner_law_firm" in samples[0]
+    df_firms = pd.read_csv(firms_path)
+    assert len(df_firms) == 5
+    assert "firm_name" in df_firms.columns
+    assert "adherence_rate" in df_firms.columns
+    
+    df_sample = pd.read_csv(sample_path)
+    assert len(df_sample) == 120
+    assert "partner_law_firm" in df_sample.columns
+
