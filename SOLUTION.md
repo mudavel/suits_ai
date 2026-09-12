@@ -103,35 +103,48 @@ $$\text{Valor Alvo do Acordo} = \mathbb{E}[\text{Perda}] \times (1 - \text{Marge
 
 ---
 
-## 6. Experiência do Advogado (EnterOS Workflow)
+## 6. Experiência do Usuário e Separação de Perfis (Dual Role Auth)
 
-Nossa plataforma entrega valor real do início ao fim do processo de trabalho do advogado:
+Para atender à realidade operacional da Enter e aos requisitos 3, 4 e 5 do desafio, a plataforma implementa uma **arquitetura de controle de acesso e experiência baseada em perfis (Dual-Role EnterOS)** com alternância rápida em 1 clique:
 
-1. **Triagem Rápida:** Listagem de casos priorizados por risco, valor e completude de subsídios.
+### 🔐 1. Tela de Login e Seleção de Perfil (`/login`)
+* **Perfil Advogado do Escritório Parceiro** (ex: *Dr. Lucas Ramos — Pinheiro & Associados Advogados*): Acesso restrito à esteira operacional de processos e ferramentas de defesa/acordo.
+* **Perfil Gestão / Diretoria Jurídica do Banco** (ex: *Dra. Mariana Souza — Head Contencioso Cível Banco Unicamp*): Acesso exclusivo ao Cockpit Estratégico de Governança, auditoria de escritórios e métricas de ROI.
+* **Role Switcher Rápido:** No header da aplicação, permite aos jurados e avaliadores do hackathon alternar instantaneamente entre a visão do Advogado e a visão do Banco.
+
+### ⚖️ 2. Workflow do Advogado (Requisitos 1, 2 e 3)
+1. **Triagem Rápida:** Listagem dos casos atribuídos ao seu escritório com tags visuais de prioridade e risco.
 2. **Workspace Analítico (Split-View):** Visualização lado a lado da Petição Inicial / Documentos do Autor e dos Subsídios do Banco.
 3. **Simulação de Cenários Judiciais (War Room):**
-   - ⚔️ **Teses do Atacante (Autor):** Mapeamento prévio dos contra-argumentos que a outra parte usará (alegação de conta de terceiro, súmula 479/STJ, coação de idoso).
-   - 👨‍⚖️ **Tendência do Magistrado (Juiz):** Previsão do rigor probatório da comarca (se exige perícia presencial, histórico de inversão do CDC e faixa provável de dano moral).
-   - 🛡️ **Estratégia de Neutralização:** Dicas para blindar a contestação ou justificar o acordo.
-4. **Parecer Explicável & Chat Jurídico Copilot:**
-   - Resumo jurídico automático fundamentando a estratégia recomendada.
-   - **Chat Interativo em Tempo Real:** O advogado pode debater teses jurídicas, treinar contra-argumentos (*"Como rebater a tese da Súmula 479 se o autor alegar fraude?"*) e refinar minutas.
+   - ⚔️ **Teses do Atacante (Autor):** Mapeamento prévio dos contra-argumentos da outra parte.
+   - 👨‍⚖️ **Tendência do Magistrado (Juiz):** Previsão do rigor probatório da comarca e dano moral médio.
+   - 🛡️ **Estratégia de Neutralização:** Dicas práticas para sustentar a defesa ou negociar o acordo.
+4. **Parecer Explicável & Chat Jurídico Copilot:** Debate interativo de teses com GPT-4o contextualizado nos autos.
 5. **Gerador de Minutas em 1 Clique (HTML/CSS via WeasyPrint):**
+<<<<<<< HEAD
    - **Caso DEFESA:** Gera a minuta formal da **Contestação Judicial** em PDF timbrado, com fundamentação fática, citação expressa dos subsídios probatórios válidos anexados (CCB, TED, BACEN) e pedidos de improcedência.
    - **Caso ACORDO:** Gera a minuta do **Termo de Transação / Acordo Judicial** em PDF timbrado (com cláusulas de quitação plena, estorno e extinção pelo art. 487, III, 'b', CPC) + **Script padronizado de proposta para WhatsApp/E-mail**.
    - Ambas as minutas podem ser editadas diretamente na interface antes do download em PDF oficial ou exportação em Word/texto.
 5. **Copiloto de Negociação:** Simulador em tempo real que avalia contrapropostas do autor contra a alçada do banco.
+=======
+   - **Caso DEFESA:** Minuta formal da **Contestação Judicial** timbrada com citação dos subsídios.
+   - **Caso ACORDO:** Minuta do **Termo de Transação / Acordo Judicial** + Script de WhatsApp/E-mail.
+6. **Copiloto de Negociação & Alçada:** Simulador em tempo real (Piso $\rightarrow$ Alvo $\rightarrow$ Teto) que avalia contrapropostas.
+7. **Fechamento de Caso:** Registro do desfecho final com justificativa formal em caso de divergência (*override*).
+>>>>>>> 2529d7cfa7b393f7dd6480ceddb6191fc8a5ddb4
 
 ---
 
-## 7. Governança e Monitoramento Gerencial (Banco Unicamp)
+## 7. Governança e Cockpit Gerencial do Banco Unicamp (Requisitos 4 e 5)
 
-* **Monitoramento de Aderência:**
-  - Taxa de seguimento global das recomendações pelos escritórios parceiros.
-  - Auditoria de *overrides* (desvios) com motivos registrados e rankings de compliance.
-* **Monitoramento de Efetividade & ROI:**
+Painel executivo exclusivo para a gestão do banco acompanhar a performance da política em tempo real:
+
+* **Monitoramento de Aderência (Req. 4):**
+  - Taxa de seguimento global das recomendações pelos escritórios parceiros terceirizados.
+  - Auditoria de *overrides* (desvios) com motivos registrados, rankings de conformidade e alertas de compliance.
+* **Monitoramento de Efetividade & ROI (Req. 5):**
   - *Cost Avoidance* acumulado (economia líquida em R$ gerada pela política de acordos).
-  - Taxa de conversão de acordos e análise de sensibilidade da negociação.
+  - Taxa de conversão de acordos e análise de sensibilidade da negociação com slider dinâmico.
 * **Diagnóstico da Esteira de Subsídios:**
   - Relatório de causas-raiz apontando em quais canais ou regiões o próprio banco enfrenta maior dificuldade de localização de contratos e documentos.
 
