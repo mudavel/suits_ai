@@ -54,19 +54,19 @@ flowchart TD
 
 #### Entregáveis da Branch 1:
 1. **Pipeline de Dados & Treinamento:**
-   - Ingestão e limpeza da base oficial de 60.000 sentenças (`scripts/01_prepare_data.py`).
-   - Treinamento do modelo supervisionado **Random Forest** (`scripts/02_train_model.py`) com validação cruzada e calibração de probabilidade de perda em zonas cinzentas.
+   - Ingestão e limpeza da base oficial de 60.000 sentenças (`scripts/01_prepare_data.py`), estruturando as 9 features: `[has_contract, has_statement, has_credit_receipt, has_dossier, has_debt_evolution, has_referenced_report, uf, sub_issue, log_cause_value]`.
+   - Treinamento do modelo supervisionado **Random Forest com CalibratedClassifierCV** (`scripts/02_train_model.py`) validando $AUC \ge 0,92$ e $Brier \le 0,095$.
    - Serialização dos artefatos em `artefatos/modelo_jurimetrico.pkl` e `artefatos/features.json`.
 2. **Motor de Decisão Híbrido (`src/policy/engine.py`):**
-   - Regra 1: Dossiê NÃO CONFORME $\rightarrow$ `ACORDO FAST-TRACK`.
-   - Regra 2: Três subsídios críticos (Contrato + TED + BACEN) $\rightarrow$ `DEFESA`.
-   - Regra 3: Falha probatória grave (0 a 1 crítico) $\rightarrow$ `ACORDO`.
-   - Regra 4: Zona cinzenta (2 críticos) $\rightarrow$ Classificação via modelo Random Forest jurimétrico.
-3. **Motor de Precificação Atuarial (`src/policy/pricing.py`):**
-   - Cálculo do Custo Esperado de Perda $\mathbb{E}[\text{Perda}]$.
-   - Determinação da régua de alçada: **Piso de Abertura**, **Valor Alvo** e **Teto de Alçada**.
+   - **Regra 1 (Fraude Pericial):** Dossiê NÃO CONFORME $\rightarrow$ `ACORDO FAST-TRACK`.
+   - **Regra 2 (Extremo sem prova - 97,3% risco):** Sem Contrato E Sem Extrato $\rightarrow$ `ACORDO IMEDIATO`.
+   - **Regra 3 (Cadeia completa - 4,0% risco):** Contrato + Extrato + BACEN presentes $\rightarrow$ `DEFESA ROBUSTA`.
+   - **Regra 4 (Zona Cinzenta / 36% da base):** Apenas 1 ou 2 subsídios críticos (ex: só Contrato [59,5%] ou só Extrato [61,4%]) $\rightarrow$ Classificação probabilística contínua via **Random Forest Calibrado** ponderando UF e Subassunto (*Golpe* vs *Genérico*).
+3. **Motor de Precificação Atuarial em Duas Partes (`src/policy/pricing.py`):**
+   - Cálculo atuarial: $\mathbb{E}[\text{Perda}] = P(\text{derrota}) \times \mathbb{E}[\text{Condenação}|\text{derrota}]$ (calibrado pelo ticket médio histórico de R$ 10.658,35 e multiplicadores por UF).
+   - Determinação da régua de alçada: **Piso de Abertura (~60% do Alvo)**, **Valor Alvo (Economia $\ge$ 45%)** e **Teto de Alçada Autorizado**.
 4. **Suíte de Testes Unitários:**
-   - Testes em `tests/test_policy.py` e `tests/test_pricing.py` cobrindo todos os fluxos da árvore de decisão.
+   - Testes em `tests/test_policy.py` e `tests/test_pricing.py` cobrindo todos os fluxos da árvore de decisão e calibração por decil.
 
 #### Contrato de Interface (Pydantic DTOs - Export da Branch 1):
 ```python
@@ -82,8 +82,8 @@ class SettlementPricing(BaseModel):
 
 class PolicyResult(BaseModel):
     recommendation: str          # "DEFESA" | "ACORDO"
-    reasoning_code: str          # "DOSSIE_NAO_CONFORME" | "CADEIA_COMPLETA" | "FALHA_PROBATORIA" | "ML_ZONA_CINZENTA"
-    confidence_score: float      # 0.0 a 1.0
+    reasoning_code: str          # "DOSSIE_NAO_CONFORME" | "POWER_PAIR_AUSENTE" | "CADEIA_COMPLETA" | "ML_ZONA_CINZENTA"
+    confidence_score: float      # 0.0 a 1.0 (Probabilidade calibrada P(derrota))
     risk_level: str              # "BAIXO" | "MEDIO" | "ALTO" | "CRITICO"
     settlement_pricing: Optional[SettlementPricing] = None
     applied_rules: List[str]
@@ -110,6 +110,10 @@ def evaluate_case(case_data: dict) -> PolicyResult:
    - `POST /api/export-pdf` — Compilação da minuta em **PDF timbrado oficial do Banco Unicamp via WeasyPrint** (estilização CSS Forense / Paged Media).
    - `POST /api/negotiation-copilot` — Assistente de negociação que valida contrapropostas do autor em tempo real.
    - `POST /api/decisions` — Registro formal da decisão do advogado (desfecho, valores e motivos de eventual override).
+   - `GET /api/monitoring/overview` — Visão executiva macro do Banco Unicamp (Volume, Taxa de Aderência Global, Economia Acumulada R$).
+   - `GET /api/monitoring/adherence` — Métricas A01 a A20 (Aderência por escritório parceiro, advogado, tipo de subsídio, histórico de overrides).
+   - `GET /api/monitoring/effectiveness` — Métricas E01 a E20 (ROI, Cost Avoidance acumulado, simulação de sensibilidade de aceite).
+   - `GET /api/monitoring/subsidies` — Diagnóstico da esteira de subsídios do Banco Unicamp (causas-raiz de documentos faltantes).
    - Documentação OpenAPI / Swagger interativa nativa em `/docs`.
 2. **Serviço de Processamento de Documentos (`backend/services/document_service.py`):**
    - Extração estruturada de dados dos autos (petição inicial, procuração) e subsídios (contrato, extrato, BACEN, dossiê).
@@ -121,7 +125,7 @@ def evaluate_case(case_data: dict) -> PolicyResult:
 ```python
 # backend/schemas.py
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 class DraftRequest(BaseModel):
     case_id: int
@@ -134,6 +138,14 @@ class DraftResponse(BaseModel):
     title: str
     content_markdown: str
     attached_subsidies: List[str]
+
+class MonitoringOverviewResponse(BaseModel):
+    total_cases: int
+    adherence_rate: float
+    total_cost_avoidance: float
+    avg_negotiation_time_days: float
+    active_lawyers_count: int
+    partner_law_firms_count: int
 ```
 
 ---
@@ -143,17 +155,20 @@ class DraftResponse(BaseModel):
 **Objetivo:** Construir do zero a interface React 19 + Vite com visualização em split-view, card de cenários adversariais, chat copiloto, gerador de minutas e assistente de contrapropostas.
 
 #### Entregáveis da Branch 3:
-1. **Triagem de Processos (`frontend/src/pages/CaseSelection/`):**
-   - Tabela moderna com tags visuais de recomendação (🟢 Defesa, 🟡 Acordo, 🔴 Acordo Fast-Track) e resumo probatório.
-2. **Workspace Analítico (`frontend/src/pages/Workspace/`):**
+1. **Autenticação & Seleção de Perfil (`frontend/src/pages/Login/`):**
+   - Tela de login com alternância rápida em 1 clique entre **"Dr. Lucas Ramos (Advogado - Pinheiro & Associados)"** e **"Dra. Mariana Souza (Diretoria Jurídica - Banco Unicamp)"**.
+   - Header global com seletor de perfil e badge de identificação do usuário ativo.
+2. **Triagem de Processos (`frontend/src/pages/CaseSelection/`):**
+   - Tabela moderna com tags visuais de recomendação (🟢 Defesa, 🟡 Acordo, 🔴 Acordo Fast-Track), filtro por status probatório e valor da causa.
+3. **Workspace Analítico (`frontend/src/pages/Workspace/`):**
    - **Visualizador Dividido (Split-View):** Autos da Ação à esquerda e Subsídios do Banco à direita.
-   - **Card de Inteligência EnterOS:** Parecer sumarizado, probabilidade de perda e comparativo financeiro (Perda Esperada vs. Alvo do Acordo).
+   - **Card de Inteligência EnterOS:** Parecer sumarizado, probabilidade calibrada $P(\text{derrota})$ e comparativo financeiro ($\mathbb{E}[\text{Perda}]$ vs. Alvo do Acordo).
    - **Card de Simulação de Cenários Judiciais (War Room):** Abas com ⚔️ *Teses do Atacante* | 👨‍⚖️ *Tendência do Juiz* | 🛡️ *Neutralização*.
    - **Chat Jurídico Copilot (Painel Lateral/Flutuante):** Interface de conversação em tempo real para tirar dúvidas sobre o caso com *quick prompts* pré-configurados.
-3. **Copiloto de Minutas e Negociação (`frontend/src/components/DraftCopilot/`):**
+4. **Copiloto de Minutas e Negociação (`frontend/src/components/DraftCopilot/`):**
    - Botão de geração de minutas com visualizador/editor e download em 1 clique via WeasyPrint.
    - **Simulador Interativo de Alçada:** Barra dinâmica (Piso $\rightarrow$ Alvo $\rightarrow$ Teto) que avalia em tempo real a contraproposta do autor.
-4. **Modal de Fechamento de Caso (`frontend/src/components/CaseConclusion/`):**
+5. **Modal de Fechamento de Caso (`frontend/src/components/CaseConclusion/`):**
    - Registro intuitivo do resultado (defesa protocolada, acordo fechado ou justificativa de override).
 
 ---
