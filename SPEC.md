@@ -104,6 +104,8 @@ def evaluate_case(case_data: dict) -> PolicyResult:
    - `GET /api/cases` — Listagem paginada de processos com status e filtros.
    - `GET /api/cases/{case_id}` — Detalhamento completo dos autos e subsídios do caso.
    - `POST /api/analyze` — Parecer explicativo gerado por IA conectando a `Policy Engine` à análise dos autos.
+   - `POST /api/scenarios` — Simulação de cenários judiciais (previsão das teses do atacante/autor e tendências de julgamento do juiz da comarca).
+   - `POST /api/chat` — Chat interativo em tempo real (Copilot) contextualizado com os autos, subsídios, teses adversariais e histórico do caso.
    - `POST /api/generate-draft` — Geração instantânea da **Minuta de Contestação** ou **Minuta de Termo de Acordo / WhatsApp**.
    - `POST /api/export-pdf` — Compilação da minuta em **PDF timbrado oficial do Banco Unicamp via WeasyPrint** (estilização CSS Forense / Paged Media).
    - `POST /api/negotiation-copilot` — Assistente de negociação que valida contrapropostas do autor em tempo real.
@@ -138,7 +140,7 @@ class DraftResponse(BaseModel):
 
 ### 🌿 Branch 3: `feature/frontend-lawyer-platform`
 **Responsável:** Integrante 3 (Frontend & UX Lead)  
-**Objetivo:** Construir do zero a interface React 19 + Vite com visualização em split-view, copiloto interativo, gerador de minutas e assistente de contrapropostas.
+**Objetivo:** Construir do zero a interface React 19 + Vite com visualização em split-view, card de cenários adversariais, chat copiloto, gerador de minutas e assistente de contrapropostas.
 
 #### Entregáveis da Branch 3:
 1. **Triagem de Processos (`frontend/src/pages/CaseSelection/`):**
@@ -146,8 +148,10 @@ class DraftResponse(BaseModel):
 2. **Workspace Analítico (`frontend/src/pages/Workspace/`):**
    - **Visualizador Dividido (Split-View):** Autos da Ação à esquerda e Subsídios do Banco à direita.
    - **Card de Inteligência EnterOS:** Parecer sumarizado, probabilidade de perda e comparativo financeiro (Perda Esperada vs. Alvo do Acordo).
+   - **Card de Simulação de Cenários Judiciais (War Room):** Abas com ⚔️ *Teses do Atacante* | 👨‍⚖️ *Tendência do Juiz* | 🛡️ *Neutralização*.
+   - **Chat Jurídico Copilot (Painel Lateral/Flutuante):** Interface de conversação em tempo real para tirar dúvidas sobre o caso com *quick prompts* pré-configurados.
 3. **Copiloto de Minutas e Negociação (`frontend/src/components/DraftCopilot/`):**
-   - Botão de geração de minutas com visualizador/editor e download em 1 clique.
+   - Botão de geração de minutas com visualizador/editor e download em 1 clique via WeasyPrint.
    - **Simulador Interativo de Alçada:** Barra dinâmica (Piso $\rightarrow$ Alvo $\rightarrow$ Teto) que avalia em tempo real a contraproposta do autor.
 4. **Modal de Fechamento de Caso (`frontend/src/components/CaseConclusion/`):**
    - Registro intuitivo do resultado (defesa protocolada, acordo fechado ou justificativa de override).

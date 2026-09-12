@@ -109,8 +109,14 @@ Nossa plataforma entrega valor real do início ao fim do processo de trabalho do
 
 1. **Triagem Rápida:** Listagem de casos priorizados por risco, valor e completude de subsídios.
 2. **Workspace Analítico (Split-View):** Visualização lado a lado da Petição Inicial / Documentos do Autor e dos Subsídios do Banco.
-3. **Parecer Explicável por IA:** Resumo jurídico automático detalhando exatamente por que a estratégia foi recomendada.
-4. **Gerador de Minutas em 1 Clique (HTML/CSS via WeasyPrint):**
+3. **Simulação de Cenários Judiciais (War Room):**
+   - ⚔️ **Teses do Atacante (Autor):** Mapeamento prévio dos contra-argumentos que a outra parte usará (alegação de conta de terceiro, súmula 479/STJ, coação de idoso).
+   - 👨‍⚖️ **Tendência do Magistrado (Juiz):** Previsão do rigor probatório da comarca (se exige perícia presencial, histórico de inversão do CDC e faixa provável de dano moral).
+   - 🛡️ **Estratégia de Neutralização:** Dicas para blindar a contestação ou justificar o acordo.
+4. **Parecer Explicável & Chat Jurídico Copilot:**
+   - Resumo jurídico automático fundamentando a estratégia recomendada.
+   - **Chat Interativo em Tempo Real:** O advogado pode debater teses jurídicas, treinar contra-argumentos (*"Como rebater a tese da Súmula 479 se o autor alegar fraude?"*) e refinar minutas.
+5. **Gerador de Minutas em 1 Clique (HTML/CSS via WeasyPrint):**
    - **Caso DEFESA:** Gera a minuta formal da **Contestação Judicial** em PDF timbrado, com fundamentação fática, citação expressa dos subsídios probatórios válidos anexados (CCB, TED, BACEN) e pedidos de improcedência.
    - **Caso ACORDO:** Gera a minuta do **Termo de Transação / Acordo Judicial** em PDF timbrado (com cláusulas de quitação plena, estorno e extinção pelo art. 487, III, 'b', CPC) + **Script padronizado de proposta para WhatsApp/E-mail**.
    - Ambas as minutas podem ser editadas diretamente na interface antes do download em PDF oficial ou exportação em Word/texto.
