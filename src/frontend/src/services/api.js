@@ -1,19 +1,10 @@
 // Vite serves /api through its proxy. Production uses the same-origin API.
 import { applyStoredAnalysis } from './workflow.js'
+import { errorDetail } from './productLanguage.js'
+export { errorDetail } from './productLanguage.js'
 
 const READ_TIMEOUT = 15000
 const GENERATION_TIMEOUT = 300000 // Backend may use two 120-second attempts.
-
-const fieldNames = { case_id: 'Processo', settlement_amount: 'Valor do acordo', proposed_amount: 'Valor proposto', override_reason: 'Justificativa', lawyer_id: 'Advogado', law_firm_id: 'Escritório', message: 'Mensagem', content_markdown: 'Texto da minuta', expected_case_version: 'Versão do processo' }
-
-export function errorDetail(detail, status) {
-  if (typeof detail === 'string' && detail.trim()) return detail
-  if (Array.isArray(detail)) return detail.map(item => {
-    const field = item.loc?.filter(part => part !== 'body').join('.') || 'Dados'
-    return `${fieldNames[field] || field}: ${item.msg || 'valor inválido'}`
-  }).join('; ')
-  return ({ 404: 'Recurso não encontrado.', 409: 'O processo foi atualizado. Recarregue os dados antes de decidir.', 422: 'Revise os campos informados.', 502: 'A geração não foi concluída. Consulte o histórico antes de tentar novamente.', 503: 'O serviço está indisponível no momento.' })[status] || 'Não foi possível concluir a solicitação.'
-}
 
 async function request(path, { body, signal, timeoutMs = READ_TIMEOUT, binary = false } = {}) {
   const controller = new AbortController()
@@ -30,7 +21,7 @@ async function request(path, { body, signal, timeoutMs = READ_TIMEOUT, binary = 
     })
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}))
-      const error = new Error(errorDetail(payload.detail, response.status))
+      const error = new Error(errorDetail(payload.detail, response.status, { writing: body !== undefined }))
       error.status = response.status
       throw error
     }
@@ -38,7 +29,7 @@ async function request(path, { body, signal, timeoutMs = READ_TIMEOUT, binary = 
     return await response.json()
   } catch (error) {
     if (timedOut) throw new Error(body === undefined ? 'A consulta demorou demais. Tente novamente.' : 'O tempo de espera terminou. A operação pode ter sido salva; consulte o histórico antes de repetir.')
-    if (error instanceof TypeError) throw new Error(body === undefined ? 'Sem conexão com o backend. Tente novamente.' : 'A conexão foi interrompida. Consulte o histórico antes de repetir a operação.')
+    if (error instanceof TypeError) throw new Error(body === undefined ? 'Não foi possível acessar a plataforma. Tente novamente.' : 'A conexão foi interrompida. Consulte o histórico antes de repetir a operação.')
     throw error
   } finally {
     clearTimeout(timer)

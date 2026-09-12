@@ -33,10 +33,10 @@ export default function MainLayout() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Pular para o conteúdo</a>
       <header className="app-header">
-        <Link to="/triagem" className="brand-link" aria-label="Suits AI — início"><Brand compact /></Link>
+        <Link to="/triagem" className="brand-link" aria-label="Enter OS — início"><Brand compact /></Link>
         <nav className="main-nav" aria-label="Navegação principal">
           <NavLink to="/triagem" className={({ isActive }) => isActive || location.pathname === '/cases' ? 'nav-item active' : 'nav-item'}>Processos</NavLink>
-          {currentProfile.id === 'LAWYER' && location.pathname.startsWith('/workspace/') && <NavLink to={location.pathname} className="nav-item active">Workspace</NavLink>}
+          {currentProfile.id === 'LAWYER' && location.pathname.startsWith('/workspace/') && <NavLink to={location.pathname} className="nav-item active">Análise do processo</NavLink>}
           {currentProfile.id === 'BANK' && <NavLink to="/monitoramento" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Governança</NavLink>}
         </nav>
         <div className="header-actions">
@@ -55,7 +55,7 @@ export default function MainLayout() {
         </div>
       </header>
       <main id="main-content" className="app-main"><Outlet /></main>
-      <footer className="app-footer"><span>Suits AI</span><span>Inteligência para o contencioso <span className="small-square" /></span></footer>
+      <footer className="app-footer"><span>Enter OS</span><span>Inteligência para o contencioso <span className="small-square" /></span></footer>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import MarkdownContent from '../MarkdownContent'
 import { useCallback, useState } from 'react'
 import { Bot, Send } from 'lucide-react'
 import { fetchChat, fetchChats, sendChat } from '../../services/api'
@@ -40,7 +41,7 @@ function Conversation({ caseId, sessionId, onSending, onSaved, onResponse }) {
   }
   return <div className="space-y-4">
     {history.loading && <Busy>Carregando histórico...</Busy>}<ErrorNotice error={history.error} retry={history.reload} />
-    <div role="log" aria-label="Histórico do copiloto" aria-live="polite" className="chat-messages">{history.data?.messages.length ? history.data.messages.map((item, index) => <article key={index} className={'chat-message ' + (item.role === 'user' ? 'chat-message-user' : '')}><p className="eyebrow mb-2">{item.role === 'user' ? 'VOCÊ' : 'COPILOTO'}</p><p className="response-text">{item.content}</p><Sources caseId={caseId} items={item.sources} /></article>) : !history.loading && <p className="text-xs text-muted leading-relaxed">Pergunte sobre os documentos deste caso. As conversas ficam salvas para continuar depois.</p>}</div>
+    <div role="log" aria-label="Histórico do copiloto" aria-live="polite" className="chat-messages">{history.data?.messages.length ? history.data.messages.map((item, index) => <article key={index} className={'chat-message ' + (item.role === 'user' ? 'chat-message-user' : '')}><p className="eyebrow mb-2">{item.role === 'user' ? 'VOCÊ' : 'COPILOTO'}</p>{item.role === 'assistant' ? <MarkdownContent>{item.content}</MarkdownContent> : <p className="response-text">{item.content}</p>}<Sources caseId={caseId} items={item.sources} /></article>) : !history.loading && <p className="text-xs text-muted leading-relaxed">Pergunte sobre os documentos deste caso. As conversas ficam salvas para continuar depois.</p>}</div>
     <ErrorNotice error={operation.error} />
     {operation.pending && <Busy>O copiloto está preparando a resposta...</Busy>}
     <form onSubmit={submit} className="space-y-2"><label className="field-label" htmlFor="chat-message">Mensagem ao copiloto</label><textarea id="chat-message" className="field min-h-24" maxLength={4000} value={message} onChange={event => setMessage(event.target.value)} disabled={operation.pending} placeholder="Quais documentos sustentam a defesa?" required /><div className="flex items-center justify-between gap-3"><span className="text-[10px] text-muted">{message.length}/4.000 · últimas 20 mensagens</span><button className="button-primary" disabled={operation.pending || history.loading || !!history.error || !message.trim()}><Send size={14} />Enviar</button></div></form>

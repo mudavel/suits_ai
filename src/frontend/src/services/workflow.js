@@ -17,7 +17,7 @@ export function applyStoredAnalysis(caseData, envelope) {
 }
 export function policyScore(policy) {
   if (!policy || policy.confidence_score == null) return null
-  const label = { loss_probability: 'Probabilidade de derrota', recommendation_confidence: 'Confiança na recomendação', unspecified: 'Score do motor (semântica não informada)' }[policy.confidence_score_semantics] || 'Score do motor (semântica não informada)'
+  const label = { loss_probability: 'Probabilidade de derrota', recommendation_confidence: 'Confiança na recomendação', unspecified: 'Índice informado (interpretação não definida)' }[policy.confidence_score_semantics] || 'Índice informado (interpretação não definida)'
   return { label, value: policy.confidence_score }
 }
 export function parseAmount(input) {
