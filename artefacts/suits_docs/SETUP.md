@@ -62,6 +62,18 @@ python run.py
 - **API REST / Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
+### Iniciar o Frontend (React + Vite)
+
+Em outro terminal, inicie a interface de usuário:
+
+```bash
+cd src/frontend
+npm install
+npm run dev
+```
+
+- **Aplicação Web:** [http://localhost:5173](http://localhost:5173)
+
 ---
 
 ## 5. Estrutura do Projeto
@@ -71,18 +83,17 @@ suits_ai/
 ├── src/
 │   ├── backend/         # Servidor FastAPI, Routers, Serviços e Schemas DTO
 │   ├── policy/          # Motor de decisão jurimétrica, regras e pricing atuarial
-│   └── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
-├── frontend/            # Aplicação React 19 + Vite (UI do Advogado e Cockpit)
+│   ├── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
+│   └── frontend/        # Aplicação React 19 + Vite (UI do Advogado e Cockpit)
 ├── tests/               # Testes automatizados (API, Policy, Pricing, Monitor)
 ├── data/                # Bases de dados operacionais e amostras (.csv)
 ├── scripts/             # Pipelines de dados, treino do modelo e simulações
 ├── artefacts/           # Insumos brutos, documentações e modelos (.pkl, .json)
-├── docs/                # Slides executivos, especificações e documentação
+│   ├── Hackaton Unicamp/# Planilhas, PDFs e ZIPs dos casos
+│   └── suits_docs/      # Documentação oficial, especificações e FILETREE.md
+├── docs/                # Slides executivos, apresentação e pitch
 ├── requirements.txt     # Dependências unificadas do projeto
 ├── pytest.ini           # Configuração unificada do Pytest
 ├── run.py               # Orquestrador de execução da aplicação
-├── SPEC.md              # Especificação técnica e contratos de interface
-├── ROADMAP.md           # Cronograma de desenvolvimento e divisões
-├── SOLUTION.md          # Detalhamento arquitetural da solução
 └── README.md            # Visão geral e contextualização do desafio
 ```

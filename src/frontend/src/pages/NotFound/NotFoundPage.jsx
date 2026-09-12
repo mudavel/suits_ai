@@ -10,8 +10,8 @@ export default function NotFoundPage() {
         A rota informada não existe ou o processo judicial não foi localizado no sistema EnterOS.
       </p>
       <Link
-        to="/"
-        className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+        to="/triagem"
+        className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
       >
         <Home className="w-4 h-4" />
         Voltar para a Triagem
