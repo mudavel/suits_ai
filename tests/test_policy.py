@@ -31,6 +31,9 @@ def test_rule_1_dossie_nao_conforme():
     assert result.settlement_pricing is not None
     assert result.settlement_pricing.floor < result.settlement_pricing.target < result.settlement_pricing.ceiling
     assert any("Súmula 479/STJ" in rule for rule in result.applied_rules)
+    assert result.plain_language_explanation
+    assert result.decision_path
+    assert result.forest_consensus_reasons
 
 
 def test_rule_2_cadeia_completa_defesa():
@@ -55,6 +58,9 @@ def test_rule_2_cadeia_completa_defesa():
     assert result.confidence_score >= 0.90
     assert result.settlement_pricing is None
     assert any("373, II, CPC" in rule for rule in result.applied_rules)
+    assert result.plain_language_explanation
+    assert result.decision_path
+    assert result.forest_consensus_reasons
 
 
 def test_rule_3_falha_probatoria_severa():
@@ -75,6 +81,8 @@ def test_rule_3_falha_probatoria_severa():
     assert result_0.reasoning_code == "FALHA_PROBATORIA"
     assert result_0.risk_level == "CRITICO"
     assert result_0.settlement_pricing is not None
+    assert result_0.decision_path
+    assert result_0.forest_consensus_reasons
 
     # Subcaso B: 1 crítico apenas (ex: só tem BACEN, sem contrato e sem extrato)
     case_1 = {
@@ -91,6 +99,8 @@ def test_rule_3_falha_probatoria_severa():
     assert result_1.recommendation == "ACORDO"
     assert result_1.reasoning_code == "FALHA_PROBATORIA"
     assert result_1.settlement_pricing is not None
+    assert result_1.decision_path
+    assert result_1.forest_consensus_reasons
 
 
 def test_rule_4_zona_cinzenta_ml():
@@ -109,8 +119,32 @@ def test_rule_4_zona_cinzenta_ml():
     assert result.reasoning_code == "ML_ZONA_CINZENTA"
     assert result.recommendation in ["DEFESA", "ACORDO"]
     assert 0.0 <= result.confidence_score <= 1.0
+    assert result.plain_language_explanation
+    assert isinstance(result.decision_path, list)
+    assert isinstance(result.forest_consensus_reasons, list)
     if result.recommendation == "ACORDO":
         assert result.settlement_pricing is not None
+
+
+def test_rule_4_ml_path_explains_case_factors():
+    """A zona cinzenta deve devolver uma trilha textual do Random Forest."""
+    case = {
+        "numero_processo": "1234567-89.2025.8.26.0100",
+        "uf": "SP",
+        "valor_causa": 22000.0,
+        "subsidios": {
+            "contrato": True,
+            "extrato": True,
+            "comprovante_credito": False,
+            "dossie": "CONFORME",
+            "demonstrativo_divida": False,
+            "laudo_referenciado": True
+        }
+    }
+    result = evaluate_case(case)
+    assert result.reasoning_code == "ML_ZONA_CINZENTA"
+    assert any("extrato" in step.lower() or "crédito" in step.lower() or "dívida" in step.lower() for step in result.decision_path)
+    assert any("defesa" in result.plain_language_explanation.lower() or "acordo" in result.plain_language_explanation.lower() for _ in [0])
 
 
 def test_input_pydantic_direct():

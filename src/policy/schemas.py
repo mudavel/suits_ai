@@ -94,6 +94,18 @@ class PolicyResult(BaseModel):
         default_factory=list,
         description="Trilha de auditoria das regras probatórias e jurimétricas disparadas"
     )
+    plain_language_explanation: str = Field(
+        default="",
+        description="Explicação em linguagem natural justificando por que defender ou não defender"
+    )
+    decision_path: List[str] = Field(
+        default_factory=list,
+        description="Resumo, em ordem lógica, da trilha raiz-folha mais representativa do Random Forest"
+    )
+    forest_consensus_reasons: List[str] = Field(
+        default_factory=list,
+        description="Fatores que mais se repetiram entre as árvores representativas do Random Forest"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -112,6 +124,17 @@ class PolicyResult(BaseModel):
                     "Auditoria Probatória: Dossiê Grafotécnico/Facial classificado como NÃO CONFORME",
                     "Aplicação Súmula 479/STJ e estancamento de dano moral massificado",
                     "Ativação de Acordo Fast-Track com régua atuarial de negociação"
+                ],
+                "plain_language_explanation": "A recomendação é não sustentar a defesa até o fim e priorizar acordo, porque as provas do caso deixam o banco exposto a um risco alto de derrota.",
+                "decision_path": [
+                    "O modelo encontrou ausência de comprovante de crédito.",
+                    "Também pesou a falta de demonstrativo de evolução da dívida.",
+                    "O conjunto final de indícios manteve o caso em uma faixa de risco desfavorável para defesa integral."
+                ],
+                "forest_consensus_reasons": [
+                    "Ausência de comprovante de crédito apareceu repetidamente entre as árvores analisadas.",
+                    "Presença de extrato ajudou a defesa, mas não foi suficiente para neutralizar o risco.",
+                    "O conjunto documental incompleto foi tratado como sinal de atenção pelo modelo."
                 ]
             }
         }
