@@ -4,7 +4,6 @@
 *.env.*.local
 
 # Dados sensíveis — não versionar
-data/*.csv
 data/subsidios/
 data/processos_exemplo/
 
@@ -43,3 +42,4 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+

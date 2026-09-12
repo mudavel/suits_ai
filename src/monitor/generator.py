@@ -24,10 +24,13 @@ OVERRIDE_REASONS = [
 ]
 
 
-def load_and_merge_raw_dataset(excel_path: str) -> pd.DataFrame:
-    """Carrega e funde as duas abas da planilha oficial do Hackathon."""
-    df_results = pd.read_excel(excel_path, sheet_name="Resultados dos processos")
-    df_subsidies = pd.read_excel(excel_path, sheet_name="Subsídios disponibilizados", header=1)
+def load_and_merge_raw_dataset(source_path: str) -> pd.DataFrame:
+    """Carrega e funde a base oficial (suporta arquivo CSV mesclado ou Excel com as duas abas)."""
+    if source_path.endswith(".csv"):
+        return pd.read_csv(source_path)
+        
+    df_results = pd.read_excel(source_path, sheet_name="Resultados dos processos")
+    df_subsidies = pd.read_excel(source_path, sheet_name="Subsídios disponibilizados", header=1)
     
     # Renomeia chave se necessário
     if "Número do processos" in df_subsidies.columns:
@@ -263,8 +266,30 @@ def generate_governance_summary_json(df_enriched: pd.DataFrame, output_path: str
         },
     }
     
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
+    out_dir = os.path.dirname(output_dir) if os.path.isfile(output_dir) else output_dir
+    os.makedirs(out_dir, exist_ok=True)
+    
+    # Salva apenas tabelas CSV de governança
+    df_firms = pd.DataFrame(law_firms_summary)
+    df_sens = pd.DataFrame(sim_results["sensitivity_curve"])
+    df_overrides = pd.DataFrame(override_distribution)
+    df_subsidies = pd.DataFrame(bottlenecks)
+    
+    df_firms.to_csv(os.path.join(out_dir, "governance_law_firms.csv"), index=False, encoding="utf-8")
+    df_sens.to_csv(os.path.join(out_dir, "governance_sensitivity_curve.csv"), index=False, encoding="utf-8")
+    df_overrides.to_csv(os.path.join(out_dir, "governance_override_reasons.csv"), index=False, encoding="utf-8")
+    df_subsidies.to_csv(os.path.join(out_dir, "governance_subsidies_bottlenecks.csv"), index=False, encoding="utf-8")
+    
+    # Salva overview em CSV de linha única
+    df_overview = pd.DataFrame([{
+        "total_cases": total_cases,
+        "global_adherence_rate": round(adherence_rate * 100.0, 1),
+        "total_cost_avoidance": sim_results["net_cost_avoidance"],
+        "savings_percentage": sim_results["savings_percentage"],
+        "roi_multiple": sim_results["roi_multiple"],
+        "active_lawyers_count": len(PARTNER_LAW_FIRMS),
+        "partner_law_firms_count": len(PARTNER_LAW_FIRMS),
+    }])
+    df_overview.to_csv(os.path.join(out_dir, "governance_overview.csv"), index=False, encoding="utf-8")
         
     return summary
