@@ -70,8 +70,8 @@ suits_ai/
   - [ ] Criar rotas mockadas com contratos definidos no `SPEC.md` (`GET /api/cases`, `GET /api/cases/{id}`, `POST /api/analyze`).
   - [ ] Validar documentação interativa em `http://localhost:8000/docs` para a Pessoa 3 consumir.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
-  - [ ] Configurar React 19 + Vite com Tailwind/CSS e roteamento em `frontend/`.
-  - [ ] Construir a tela de **Triagem de Casos** consumindo a lista mockada da API do backend.
+  - [x] Configurar React 19 + Vite com Tailwind/CSS e roteamento em `frontend/`.
+  - [x] Construir a tela de **Triagem de Casos** consumindo a lista mockada da API do backend.
   - [ ] Criar o esqueleto do layout da página de **Workspace do Processo**.
 * **🌿 Pessoa 4 (`feature/governance-monitoring-dashboard`):**
   - [ ] Estruturar o dataset enriquecido com advogados e escritórios parceiros sintéticos.
