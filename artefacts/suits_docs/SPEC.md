@@ -155,17 +155,20 @@ class MonitoringOverviewResponse(BaseModel):
 **Objetivo:** Construir do zero a interface React 19 + Vite com visualização em split-view, card de cenários adversariais, chat copiloto, gerador de minutas e assistente de contrapropostas.
 
 #### Entregáveis da Branch 3:
-1. **Triagem de Processos (`frontend/src/pages/CaseSelection/`):**
-   - Tabela moderna com tags visuais de recomendação (🟢 Defesa, 🟡 Acordo, 🔴 Acordo Fast-Track) e resumo probatório.
-2. **Workspace Analítico (`frontend/src/pages/Workspace/`):**
+1. **Autenticação & Seleção de Perfil (`frontend/src/pages/Login/`):**
+   - Tela de login com alternância rápida em 1 clique entre **"Dr. Lucas Ramos (Advogado - Pinheiro & Associados)"** e **"Dra. Mariana Souza (Diretoria Jurídica - Banco Unicamp)"**.
+   - Header global com seletor de perfil e badge de identificação do usuário ativo.
+2. **Triagem de Processos (`frontend/src/pages/CaseSelection/`):**
+   - Tabela moderna com tags visuais de recomendação (🟢 Defesa, 🟡 Acordo, 🔴 Acordo Fast-Track), filtro por status probatório e valor da causa.
+3. **Workspace Analítico (`frontend/src/pages/Workspace/`):**
    - **Visualizador Dividido (Split-View):** Autos da Ação à esquerda e Subsídios do Banco à direita.
-   - **Card de Inteligência EnterOS:** Parecer sumarizado, probabilidade de perda e comparativo financeiro (Perda Esperada vs. Alvo do Acordo).
+   - **Card de Inteligência EnterOS:** Parecer sumarizado, probabilidade calibrada $P(\text{derrota})$ e comparativo financeiro ($\mathbb{E}[\text{Perda}]$ vs. Alvo do Acordo).
    - **Card de Simulação de Cenários Judiciais (War Room):** Abas com ⚔️ *Teses do Atacante* | 👨‍⚖️ *Tendência do Juiz* | 🛡️ *Neutralização*.
    - **Chat Jurídico Copilot (Painel Lateral/Flutuante):** Interface de conversação em tempo real para tirar dúvidas sobre o caso com *quick prompts* pré-configurados.
-3. **Copiloto de Minutas e Negociação (`frontend/src/components/DraftCopilot/`):**
+4. **Copiloto de Minutas e Negociação (`frontend/src/components/DraftCopilot/`):**
    - Botão de geração de minutas com visualizador/editor e download em 1 clique via WeasyPrint.
    - **Simulador Interativo de Alçada:** Barra dinâmica (Piso $\rightarrow$ Alvo $\rightarrow$ Teto) que avalia em tempo real a contraproposta do autor.
-4. **Modal de Fechamento de Caso (`frontend/src/components/CaseConclusion/`):**
+5. **Modal de Fechamento de Caso (`frontend/src/components/CaseConclusion/`):**
    - Registro intuitivo do resultado (defesa protocolada, acordo fechado ou justificativa de override).
 
 ---

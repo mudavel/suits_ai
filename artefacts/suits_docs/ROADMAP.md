@@ -71,6 +71,7 @@ suits_ai/
   - [ ] Validar documentação interativa OpenAPI em `http://localhost:8000/docs` para a Pessoa 3 consumir.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
   - [ ] Configurar React 19 + Vite com Tailwind/CSS e roteamento em `frontend/`.
+  - [ ] Construir a tela de **Login / Seleção de Perfil** (`/login`) com alternância rápida (Advogado vs Banco).
   - [ ] Construir a tela de **Triagem de Casos** consumindo a lista da API do backend.
   - [ ] Criar o esqueleto do layout da página de **Workspace do Processo** e da página de **Cockpit de Monitoramento** (`frontend/src/pages/Monitoring/`).
 * **🌿 Pessoa 4 (`feature/governance-monitoring-dashboard`):**
@@ -96,6 +97,7 @@ suits_ai/
   - [ ] Endpoints de Monitoramento (`/api/monitoring/overview`, `/api/monitoring/adherence`, `/api/monitoring/effectiveness`, `/api/monitoring/subsidies`) integrados ao motor analítico da Pessoa 4.
   - [ ] `backend/database/`: Persistência SQLite para salvar decisões e feedbacks/overrides dos advogados.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
+  - [ ] Implementar a experiência completa de **Login & Role Switcher** no Header (chaveamento instantâneo de visão).
   - [ ] Concluir o **Workspace Split-View** (Autos da Ação à esquerda e Subsídios do Banco à direita).
   - [ ] Implementar o card de **Simulação de Cenários Judiciais** (War Room).
   - [ ] Implementar o painel lateral do **Chat Jurídico Copilot** com *quick prompts*.
