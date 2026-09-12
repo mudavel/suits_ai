@@ -71,14 +71,9 @@ suits_ai/
   - [ ] Validar documentação interativa em `http://localhost:8000/docs` para a Pessoa 3 consumir.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
   - [ ] Configurar React 19 + Vite com Tailwind/CSS e roteamento em `frontend/`.
-<<<<<<<< HEAD:artefacts/Hackaton Unicamp/suits_docs/ROADMAP.md
-  - [ ] Construir a tela de **Triagem de Casos** consumindo a lista mockada da API do backend.
-  - [ ] Criar o esqueleto do layout da página de **Workspace do Processo**.
-========
   - [ ] Construir a tela de **Login / Seleção de Perfil** (`/login`) com alternância rápida (Advogado vs Banco).
   - [ ] Construir a tela de **Triagem de Casos** consumindo a lista da API do backend.
   - [ ] Criar o esqueleto do layout da página de **Workspace do Processo** e da página de **Cockpit de Monitoramento** (`frontend/src/pages/Monitoring/`).
->>>>>>>> 2529d7cfa7b393f7dd6480ceddb6191fc8a5ddb4:ROADMAP.md
 * **🌿 Pessoa 4 (`feature/governance-monitoring-dashboard`):**
   - [ ] Estruturar o dataset enriquecido com advogados e escritórios parceiros sintéticos.
   - [ ] Montar o cálculo básico de simulação contrafactual de economia financeira.

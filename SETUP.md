@@ -1,51 +1,91 @@
-# Setup e Execução
+# Setup e Execução — Suits AI (EnterOS)
 
-> Preencha este arquivo com as instruções específicas da sua solução.
+Guia completo para configuração do ambiente, execução de testes e inicialização da aplicação.
 
 ---
 
-## Pré-requisitos
+## 1. Pré-requisitos
 
-Liste aqui as dependências necessárias para rodar a solução:
+- **Python 3.10+** (recomendado Python 3.11 ou 3.12)
+- **uv** (ou gerenciador de ambientes virtuais de sua preferência)
+- **Node.js 18+** e **npm** (para o módulo frontend)
 
-- [ ] ...
-- [ ] ...
+---
 
-## Variáveis de Ambiente
+## 2. Configuração do Ambiente
 
-Crie um arquivo `.env` na raiz do projeto com as variáveis necessárias:
+1. Clone o repositório e acesse a pasta raiz:
+   ```bash
+   git clone https://github.com/mudavel/suits_ai.git
+   cd suits_ai
+   ```
 
-```env
-# Exemplo — adapte conforme sua solução
-OPENAI_API_KEY=sua_chave_aqui
-```
+2. Crie e ative o ambiente virtual:
+   ```bash
+   uv venv .venv
+   source .venv/bin/activate
+   ```
 
-> **Nunca commite o arquivo `.env` com credenciais reais.**  
-> Um arquivo `.env.example` com as variáveis (sem valores) já está incluído neste repo.
+3. Instale as dependências:
+   ```bash
+   uv pip install -r backend/requirements-dev.txt
+   uv pip install -r backend/requirements.txt
+   ```
 
-## Instalação
+4. Configure as variáveis de ambiente:
+   ```bash
+   cp .env.example .env
+   # Edite o .env se desejar customizar porta, host ou chave da OpenAI
+   ```
+
+---
+
+## 3. Execução dos Testes Automatizados
+
+Para rodar a suíte completa de testes unitários e de integração (Policy Engine, Pricing, Monitoramento e API FastAPI):
 
 ```bash
-# Descreva aqui os passos de instalação
+pytest
 ```
 
-## Execução
+---
+
+## 4. Inicialização da Aplicação
+
+### Iniciar o Backend (FastAPI + Swagger)
+
+Execute o orquestrador unificado na raiz do projeto:
 
 ```bash
-# Descreva aqui como rodar a solução
+python run.py
 ```
 
-## Dados
+- **API REST / Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-Coloque os arquivos de dados fornecidos na pasta `data/`. Consulte [`data/README.md`](./data/README.md) para instruções detalhadas.
+---
 
-## Estrutura do Projeto
+## 5. Estrutura do Projeto
 
 ```
-├── src/          # código-fonte
-├── data/         # dados (não versionados — ver .gitignore)
-├── docs/         # apresentação e documentação
-├── .env.example  # variáveis de ambiente necessárias
-├── SETUP.md      # este arquivo
-└── README.md     # descrição do desafio
+suits_ai/
+├── backend/             # Servidor FastAPI, Routers, Serviços e Schemas DTO
+│   ├── routers/         # Rotas /cases, /analysis, /monitoring
+│   ├── services/        # Serviços de negócio, mocks e integrações
+│   └── tests/           # Testes automatizados da API
+├── src/
+│   ├── policy/          # Motor de decisão jurimétrica, regras e pricing atuarial
+│   └── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
+├── data/                # Bases de dados sintéticas e amostras (.csv)
+├── scripts/             # Pipelines de dados, treino do modelo e simulações
+├── artefatos/           # Modelos treinados (.pkl) e metadados (.json)
+├── artefacts/           # Arquivos e insumos brutos do desafio
+├── docs/                # Slides executivos, especificações e documentação
+├── tests/               # Testes unitários do policy engine e do monitor
+├── pytest.ini           # Configuração unificada do Pytest
+├── run.py               # Orquestrador de execução da aplicação
+├── SPEC.md              # Especificação técnica e contratos de interface
+├── ROADMAP.md           # Cronograma de desenvolvimento e divisões
+├── SOLUTION.md          # Detalhamento arquitetural da solução
+└── README.md            # Visão geral e contextualização do desafio
 ```
