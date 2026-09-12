@@ -1,5 +1,4 @@
-// API Service para integração com o FastAPI (backend/main.py)
-// Com fallback automático para os Casos Oficiais do Hackathon Unicamp (Casos 01, 02 e base 60k)
+// Exemplos legados de apresentação. As consultas abaixo usam exclusivamente a API.
 
 export const MOCK_CASES = [
   {
@@ -164,56 +163,68 @@ export const MOCK_CASES = [
   }
 ]
 
-/**
- * Busca a lista de casos tentando o endpoint FastAPI `/api/cases`.
- * Se o backend estiver indisponível, faz fallback automático para os dados mockados oficiais.
- */
-export async function fetchCases() {
+export async function requestJson(path) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10000)
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 2000)
-
-    const response = await fetch('/api/cases', {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' }
-    })
-    clearTimeout(timeoutId)
-
+    const response = await fetch(path, { signal: controller.signal, headers: { Accept: 'application/json' } })
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`)
+      const error = new Error(response.status === 404 ? 'Caso não encontrado.' : 'Não foi possível carregar os dados. Tente novamente.')
+      error.status = response.status
+      throw error
     }
-
-    const data = await response.json()
-    return { data, isMock: false }
-  } catch {
-    // Retorna os dados mockados enriquecidos para garantir continuidade imediata
-    return { data: MOCK_CASES, isMock: true }
+    return await response.json()
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
-/**
- * Busca os detalhes de um caso específico por ID.
- */
-export async function fetchCaseById(id) {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 2000)
-
-    const response = await fetch(`/api/cases/${id}`, {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' }
-    })
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`)
-    }
-
-    const data = await response.json()
-    return { data, isMock: false }
-  } catch {
-    const found = MOCK_CASES.find((c) => String(c.id) === String(id)) || MOCK_CASES[0]
-    return { data: found, isMock: true }
+// A apresentação mantém os campos ausentes como null e usa os nomes da API.
+export function mapCase(item) {
+  const presence = item.subsidies || {}
+  return {
+    id: item.id,
+    caseNumber: item.case_number,
+    title: item.title,
+    claimant: item.claimant_name || item.title,
+    defendant: item.defendant_name ?? null,
+    claimantCpf: null,
+    court: item.court ?? null,
+    state: item.uf,
+    claimValue: item.cause_value,
+    status: item.status,
+    version: item.version,
+    riskLevel: item.risk_level,
+    recommendation: item.recommendation,
+    expectedLoss: null,
+    lossProbability: null,
+    settlementPricing: null,
+    reasoningCode: null,
+    reasoningTitle: item.title,
+    reasoningDescription: item.sub_issue,
+    daysToHearing: null,
+    isSimulated: item.is_simulated ?? null,
+    dataMode: item.data_mode,
+    documents: item.documents || [],
+    claims: item.claims || [],
+    checks: item.checks || [],
+    subsidies: {
+      contract: { ok: presence.has_contract },
+      bankStatement: { ok: presence.has_statement },
+      bacen: { ok: presence.has_credit_receipt },
+    },
   }
+}
+
+export async function fetchCases() {
+  const envelope = await requestJson('/api/cases')
+  if (!Array.isArray(envelope.items)) throw new Error('Não foi possível ler a lista de processos.')
+  return { data: envelope.items.map(mapCase), isMock: envelope.data_mode === 'mock', total: envelope.total, page: envelope.page, totalPages: envelope.total_pages }
+}
+
+export async function fetchCaseById(id) {
+  if (!/^[1-9]\d*$/.test(String(id))) throw new Error('Caso não encontrado.')
+  const item = await requestJson(`/api/cases/${id}`)
+  return { data: mapCase(item), isMock: item.data_mode === 'mock' }
 }
 

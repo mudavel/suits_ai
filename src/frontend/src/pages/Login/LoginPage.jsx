@@ -1,156 +1,56 @@
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Building2, CornerDownLeft } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import {
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  Building2,
-  Briefcase,
-  Sparkles,
-  Lock,
-  CheckCircle2,
-} from 'lucide-react'
+import Brand from '../../components/Brand/Brand'
+
+const roles = [
+  { key: 'LAWYER', title: 'Advogado', description: 'Analise processos, consulte documentos e prepare sua estratégia.', icon: BriefcaseBusiness },
+  { key: 'BANK', title: 'Diretoria jurídica', description: 'Acompanhe a operação e os indicadores do contencioso.', icon: Building2 },
+]
 
 export default function LoginPage() {
   const { currentProfile, switchProfile, PROFILES } = useAuth()
   const navigate = useNavigate()
 
-  const handleSelectAndEnter = (roleKey) => {
-    switchProfile(roleKey)
-    const target = PROFILES[roleKey]?.defaultRoute || '/'
-    navigate(target)
+  const handleEnter = (role) => {
+    switchProfile(role)
+    navigate(PROFILES[role].defaultRoute)
   }
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col justify-between p-6 sm:p-10 font-sans selection:bg-blue-600">
-      {/* Top Brand Tag */}
-      <div className="flex items-center justify-between max-w-5xl w-full mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <Layers className="w-4 h-4 text-white" />
+    <div className="login-page">
+      <header className="login-header">
+        <Brand />
+        <span className="login-context"><span className="status-dot" /> Ambiente de demonstração</span>
+      </header>
+      <main className="login-main">
+        <section className="login-intro" aria-labelledby="login-title">
+          <p className="eyebrow"><span className="small-square" /> INTELIGÊNCIA PARA O CONTENCIOSO</p>
+          <h1 id="login-title">Seu jurídico,<br />com mais <span className="title-emphasis">clareza.</span></h1>
+          <p className="login-description">Dos documentos à decisão. Um espaço para entender cada caso e construir o próximo passo.</p>
+          <div className="login-signature" aria-hidden="true">
+            <span className="signature-line" /><span className="signature-word">Contexto. Estratégia. Ação.</span>
+            <CornerDownLeft size={22} strokeWidth={1.2} />
           </div>
-          <span className="font-bold text-base tracking-tight text-white flex items-center gap-1.5">
-            ENTER<span className="text-blue-400 font-normal">OS</span>
-            <span className="text-[10px] text-slate-500 border border-slate-800 px-1.5 py-0.5 rounded ml-1 font-mono">
-              v2.4
-            </span>
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Ambiente Seguro • Banco Unicamp</span>
-        </div>
-      </div>
-
-      {/* Main Authentication & Profile Selection Flow */}
-      <div className="max-w-2xl w-full mx-auto my-auto py-12 space-y-8">
-        {/* Title & Headline */}
-        <div className="space-y-2 text-center sm:text-left">
-          <p className="text-xs font-semibold tracking-wider text-blue-400 uppercase">
-            Sistema Operacional de IA Jurídica
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-            Selecione seu perfil de acesso
-          </h1>
-          <p className="text-sm text-slate-400 max-w-lg">
-            Acesse a esteira de análise contenciosa com calibragem atuarial em tempo real e copiloto de minutas.
-          </p>
-        </div>
-
-        {/* Profile Selection Options (Minimalist Enterprise List) */}
-        <div className="space-y-3">
-          {/* Option 1: Lawyer */}
-          <div
-            onClick={() => handleSelectAndEnter('LAWYER')}
-            className={`group relative p-5 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
-              currentProfile.id === 'LAWYER'
-                ? 'bg-slate-900/90 border-blue-500/60 shadow-lg shadow-blue-900/20'
-                : 'bg-slate-950/60 border-white/[0.08] hover:border-white/20 hover:bg-slate-900/50'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-blue-600/10 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold text-sm">
-                LR
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-white group-hover:text-blue-400 transition-colors">
-                    Dr. Lucas Ramos
-                  </span>
-                  <span className="text-[10px] font-semibold text-blue-300 bg-blue-950/60 border border-blue-800/60 px-2 py-0.5 rounded-full">
-                    Advogado Credenciado
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Pinheiro & Associados Advogados • Fila de Triagem & Minutas de Defesa
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-              <span>Entrar</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
+        </section>
+        <section className="login-access" aria-labelledby="access-title">
+          <div className="access-heading"><span className="eyebrow">COMECE POR AQUI</span><span className="access-number">01 — 02</span></div>
+          <h2 id="access-title">Qual é o seu perfil?</h2>
+          <p className="access-description">Escolha como deseja acessar a plataforma.</p>
+          <div className="profile-options">
+            {roles.map(({ key, title, description, icon: Icon }) => (
+              <button key={key} type="button" onClick={() => handleEnter(key)} className={'profile-option ' + (currentProfile.id === key ? 'profile-option--selected' : '')}>
+                <span className="profile-icon"><Icon size={22} strokeWidth={1.4} /></span>
+                <span className="profile-content"><span className="profile-title">{title}</span><span className="profile-description">{description}</span><span className="profile-person">{PROFILES[key].name}</span></span>
+                <span className="profile-arrow"><ArrowUpRight size={22} strokeWidth={1.5} /></span>
+              </button>
+            ))}
           </div>
-
-          {/* Option 2: Bank Legal Board */}
-          <div
-            onClick={() => handleSelectAndEnter('BANK')}
-            className={`group relative p-5 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
-              currentProfile.id === 'BANK'
-                ? 'bg-slate-900/90 border-indigo-500/60 shadow-lg shadow-indigo-900/20'
-                : 'bg-slate-950/60 border-white/[0.08] hover:border-white/20 hover:bg-slate-900/50'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                MS
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-white group-hover:text-indigo-400 transition-colors">
-                    Dra. Mariana Souza
-                  </span>
-                  <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/60 border border-indigo-800/60 px-2 py-0.5 rounded-full">
-                    Diretoria do Banco
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Banco Unicamp S.A. • Cockpit de Governança, Aderência (A01) & ROI
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-              <span>Entrar</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Highlights Minimal Line */}
-        <div className="pt-4 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span>Random Forest Calibrado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span>Simulador Atuarial de Alçada</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span>Monitoramento Contrafactual</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer info */}
-      <div className="max-w-5xl w-full mx-auto text-xs text-slate-600 flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-white/[0.04]">
-        <p>EnterOS • Hackathon UFMG / Unicamp 2026</p>
-        <p>Desenvolvido para operações de contencioso massificado</p>
-      </div>
+          <p className="access-note">Perfis de demonstração para explorar os fluxos da plataforma.</p>
+        </section>
+      </main>
+      <div className="login-bottom-band"><span>O próximo passo começa com contexto.</span><ArrowRight size={24} strokeWidth={1.4} /></div>
+      <footer className="login-footer"><span>Suits AI · Hackathon 2026</span><span>Decisões com contexto. Revisão humana em cada etapa.</span></footer>
     </div>
   )
 }
