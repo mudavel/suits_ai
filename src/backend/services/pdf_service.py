@@ -33,7 +33,7 @@ class PdfService:
         p { orphans: 3; widows: 3; } li { margin-bottom: 6pt; }
         .label { font: bold 9pt Arial,sans-serif; color:#7c4824; margin: 12pt 0; }
         @media screen { body { max-width: 780px; margin: 40px auto; padding: 24px; } }
-        </style></head><body><header>SUITS AI | Revisão jurídica</header>
+        </style></head><body><header>Enter OS | Revisão jurídica</header>
         <div class="label">MINUTA PARA REVISÃO - SEM ASSINATURA OU ACEITE</div>""" + body + "</body></html>"
 
     def render(self, draft: DraftResponse, content: str) -> tuple[bytes, str]:
@@ -69,7 +69,7 @@ class PdfService:
             canvas.saveState()
             canvas.setFillColor(colors.HexColor("#153c52"))
             canvas.setFont("SuitsBold", 9)
-            canvas.drawString(23*mm, A4[1]-15*mm, "SUITS AI | Revisão jurídica")
+            canvas.drawString(23*mm, A4[1]-15*mm, "Enter OS | Revisão jurídica")
             canvas.setStrokeColor(colors.HexColor("#236b70"))
             canvas.line(23*mm, A4[1]-18*mm, A4[0]-23*mm, A4[1]-18*mm)
             canvas.setFont("Suits", 7)
@@ -77,6 +77,6 @@ class PdfService:
             canvas.restoreState()
 
         document = SimpleDocTemplate(output, pagesize=A4, leftMargin=23*mm, rightMargin=23*mm,
-            topMargin=26*mm, bottomMargin=23*mm, title="Minuta para revisão - Suits AI")
+            topMargin=26*mm, bottomMargin=23*mm, title="Minuta para revisão - Enter OS")
         document.build(story, onFirstPage=frame, onLaterPages=frame)
         return output.getvalue()

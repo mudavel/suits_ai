@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { fetchDecisions, requestJson } from '../../services/api'
 import { dateTime, money } from '../../services/workflow'
+import { systemText } from '../../services/productLanguage'
 import { useRemote } from '../../hooks/useRemote'
 import { Busy, ErrorNotice, OffsetPager } from '../../components/Workspace/Shared'
 
@@ -69,7 +70,7 @@ export default function MonitoringPage() {
     {
       label: 'Decisões registradas',
       value: decisions.data?.total?.toLocaleString('pt-BR') ?? '—',
-      note: 'Registros preservados no backend',
+      note: 'Decisões registradas nos processos',
     },
     {
       label: 'Economia estimada',
@@ -121,7 +122,7 @@ export default function MonitoringPage() {
       {metrics.loading && <Busy>Consultando indicadores da operação...</Busy>}
       <ErrorNotice error={metrics.error} retry={metrics.reload} />
       {overview?.data_mode === 'mock' && (
-        <p className="notice">O backend está operando com dados de demonstração.</p>
+        <p className="notice">Indicadores de demonstração.</p>
       )}
 
       {/* Grid de KPIs Principais da Operação Real */}
@@ -171,7 +172,7 @@ export default function MonitoringPage() {
               const rate = total > 0 ? ((count / total) * 100).toFixed(1) : null
               return (
                 <div key={type} className="flex items-center justify-between gap-4 py-3 text-xs">
-                  <span className="font-medium text-ink">{subsidyNames[type] || type}</span>
+                  <span className="font-medium text-ink">{subsidyNames[type] || 'Outros documentos'}</span>
                   <div className="text-right">
                     <span className="text-muted">
                       {count} {count === 1 ? 'ausência' : 'ausências'}
@@ -259,11 +260,11 @@ export default function MonitoringPage() {
               <h3 className="text-sm font-semibold">{title}</h3>
               <p className="text-xs text-muted leading-relaxed">
                 {data?.status === 'pending_integration'
-                  ? 'Os indicadores validados da carteira completa serão consolidados conforme a esteira corporativa receber volume.'
-                  : data?.message || 'Aguardando dados do serviço.'}
+                  ? 'Os indicadores validados ainda não estão disponíveis para esta operação.'
+                  : systemText(data?.message) || 'Aguardando informações para calcular os indicadores.'}
               </p>
               {data?.status === 'pending_integration' && (
-                <p className="text-[11px] text-accent-ink font-medium">
+                <p className="text-[10px] text-accent-ink font-medium">
                   Aguardando indicadores · {data.decision_count}{' '}
                   {data.decision_count === 1 ? 'decisão disponível' : 'decisões disponíveis'} para cálculo
                 </p>
@@ -341,7 +342,7 @@ export default function MonitoringPage() {
 
             {!decisions.data?.items.length && (
               <p className="text-xs text-muted py-6 text-center">
-                As decisões tomadas pelos advogados aparecerão aqui após serem registradas no Workspace.
+                As decisões aparecerão aqui depois de registradas nos processos.
               </p>
             )}
           </div>

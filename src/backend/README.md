@@ -187,12 +187,27 @@ recentemente atualizada vem primeiro. A busca do histórico continua vinculada
 ao caso e ao `session_id`.
 Os cenários deixam explícita a ausência de histórico validado de magistrados.
 
-O prompt em `services/copilot.py` define o papel do copiloto jurídico do Suits AI.
+O prompt em `services/copilot.py` define o papel do copiloto jurídico do Enter OS.
 Ele distingue a solicitação do usuário de instruções inseridas nos documentos,
 separa alegações, registros e inferências e exige fontes que sustentem o texto.
 Lacunas e divergências devem ser explicadas, sem transformar documento presente
 em prova de autenticidade ou ausência de evidência em irregularidade. A política
 fornecida é preservada e as minutas mantêm pendências para revisão do advogado.
+
+O escopo do atendimento é delimitado no system prompt: o copiloto atende tarefas
+jurídicas relacionadas ao processo e orientações sobre essas funções da plataforma.
+Pedidos alheios recebem uma resposta breve de redirecionamento, sem desenvolver
+o conteúdo solicitado nem associar fontes documentais à recusa. Pedidos mistos
+recebem somente a parte pertinente; dúvidas ambíguas podem gerar uma pergunta
+de esclarecimento. Falta de evidência em uma pergunta jurídica não é tratada
+como assunto fora do escopo. O limite vale mesmo se o histórico já contiver
+uma resposta inadequada ou houver uma tentativa de mudar as instruções.
+
+Essa camada orienta o modelo; não é um bloqueio determinístico nem um classificador
+separado. A cobertura automatizada verifica a entrega e a prioridade das instruções
+e a preservação do histórico, com transporte simulado e sem chamadas pagas.
+Antes de uso em produção, avaliar as respostas reais para pedidos alheios, mistos,
+ambiguidades e tentativas de contorno, além de perguntas jurídicas legítimas.
 
 A negociação compara o valor proposto com a última análise da versão atual do
 caso. Sem política retorna `SEM_POLITICA`; sem faixa, `SEM_FAIXA`. A comparação

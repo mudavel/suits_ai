@@ -71,11 +71,11 @@ export default function LoginPage() {
               </button>
             ))}
           </div>
-          <p className="access-note">Perfis de demonstração para explorar todos os fluxos da plataforma.</p>
+          <p className="access-note">Perfis de demonstração para conhecer a plataforma.</p>
         </section>
       </main>
       <div className="login-bottom-band"><span>O próximo passo começa com contexto.</span><ArrowRight size={24} strokeWidth={1.4} /></div>
-      <footer className="login-footer"><span>Suits AI · Hackathon 2026</span><span>Decisões com contexto. Revisão humana em cada etapa.</span></footer>
+      <footer className="login-footer"><span>Enter OS · Hackathon 2026</span><span>Decisões com contexto. Revisão humana em cada etapa.</span></footer>
     </div>
   )
 }

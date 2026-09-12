@@ -4,10 +4,9 @@ import { Home } from 'lucide-react'
 export default function NotFoundPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-      <h1 className="text-6xl font-black text-ink">404</h1>
-      <h2 className="text-xl font-bold text-ink mt-2">Página não encontrada</h2>
+      <h1 className="text-3xl text-ink">Página não encontrada</h1>
       <p className="text-sm text-muted mt-1 max-w-md">
-        A rota informada não existe ou o processo judicial não foi localizado no sistema Suits AI.
+        Não encontramos a página ou o processo solicitado. Consulte a lista de processos para continuar.
       </p>
       <Link
         to="/triagem"

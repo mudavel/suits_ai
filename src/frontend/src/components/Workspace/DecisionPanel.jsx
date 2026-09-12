@@ -51,7 +51,7 @@ function DecisionForm({ caseData, envelope, refresh, disabled, onSaved }) {
     event.preventDefault()
     operation.run(async () => {
       const value = action === 'ACORDO' ? parseAmount(amount) : null
-      if (!lawyer.trim() || !firm.trim()) throw new Error('Informe os identificadores do advogado e do escritório.')
+      if (!lawyer.trim() || !firm.trim()) throw new Error('Informe o advogado e o escritório responsáveis.')
       if ((requiresOverride(analysis?.policy, action, value) || reason.trim()) && reason.trim().length < 5) throw new Error('A justificativa deve ter pelo menos 5 caracteres.')
       return { case_id: caseData.id, action, settlement_amount: value, lawyer_id: lawyer.trim(), law_firm_id: firm.trim(), expected_case_version: caseData.version, analysis_id: analysis?.analysis_id || null, override_reason: reason.trim() || null }
     }, setReview)
@@ -67,23 +67,23 @@ function DecisionForm({ caseData, envelope, refresh, disabled, onSaved }) {
   })
   if (completed) return <p role="status" className="notice notice-success">Decisão registrada. Processo concluído.</p>
   return <div className="space-y-4">
-    {stale && <p className="notice">Atualize a análise do caso antes de registrar uma decisão. O parecer salvo é de outra versão.</p>}
+    {stale && <p className="notice">Atualize a análise do caso antes de registrar uma decisão. O parecer anterior não contempla a situação atual do processo.</p>}
     {!analysis?.policy && <p className="notice">Não há política atual disponível. O registro será identificado como decisão manual.</p>}
     {blocked && <p className="notice notice-error">Os dados mudaram ou já existe uma decisão. <button type="button" className="underline" onClick={() => { setBlocked(false); setReview(null); operation.clearError(); refresh() }}>Recarregar o processo</button> antes de continuar.</p>}
     <ErrorNotice error={operation.error} />
     {review ? <div className="space-y-4">
       <h3 className="text-sm font-semibold">Revise antes de concluir</h3>
-      <dl className="review-list"><dt>Processo</dt><dd>{caseData.caseNumber}</dd><dt>Decisão</dt><dd>{review.action}{review.settlement_amount != null ? ' · ' + money(review.settlement_amount) : ''}</dd><dt>Advogado</dt><dd>{review.lawyer_id}</dd><dt>Escritório</dt><dd>{review.law_firm_id}</dd><dt>Justificativa</dt><dd>{review.override_reason || 'Não informada'}</dd><dt>Parecer</dt><dd>{review.analysis_id ? 'Parecer salvo da versão ' + review.expected_case_version : 'Sem parecer atual'}</dd></dl>
-      <p className="text-xs text-muted">A confirmação registra a decisão e conclui o processo. O registro não pode ser substituído pela interface.</p>
+      <dl className="review-list"><dt>Processo</dt><dd>{caseData.caseNumber}</dd><dt>Decisão</dt><dd>{review.action}{review.settlement_amount != null ? ' · ' + money(review.settlement_amount) : ''}</dd><dt>Advogado</dt><dd>{review.lawyer_id}</dd><dt>Escritório</dt><dd>{review.law_firm_id}</dd><dt>Justificativa</dt><dd>{review.override_reason || 'Não informada'}</dd><dt>Parecer</dt><dd>{review.analysis_id ? 'Parecer atual do processo' : 'Sem parecer atual'}</dd></dl>
+      <p className="text-xs text-muted">A confirmação registra a decisão e conclui o processo. Depois de confirmada, a decisão não pode ser alterada.</p>
       <div className="flex flex-wrap gap-3"><button type="button" className="button-primary" disabled={busy || blocked} onClick={confirm}>Confirmar e concluir processo</button><button type="button" className="button-secondary" disabled={busy} onClick={() => setReview(null)}>Editar decisão</button></div>
     </div> : <form onSubmit={prepare} className="space-y-4">
       <div className="grid sm:grid-cols-2 gap-3"><label><span className="field-label">Decisão</span><select className="field" aria-label="Decisão" value={action} onChange={event => { setAction(event.target.value); setComparison(null) }} disabled={busy || blocked}><option value="DEFESA">Defesa</option><option value="ACORDO">Acordo</option></select></label>
       {action === 'ACORDO' && <label><span className="field-label">Valor a registrar (R$)</span><input className="field" aria-label="Valor a registrar" inputMode="decimal" value={amount} onChange={event => { setAmount(event.target.value); setComparison(null) }} placeholder="2500,00" required disabled={busy || blocked} /></label>}
-      <label><span className="field-label">Identificador do advogado</span><input className="field" value={lawyer} onChange={event => setLawyer(event.target.value)} maxLength={100} required disabled={busy || blocked} /></label><label><span className="field-label">Identificador do escritório</span><input className="field" value={firm} onChange={event => setFirm(event.target.value)} maxLength={100} required disabled={busy || blocked} /></label></div>
+      <label><span className="field-label">Advogado responsável (nome ou OAB)</span><input className="field" value={lawyer} onChange={event => setLawyer(event.target.value)} maxLength={100} required disabled={busy || blocked} /></label><label><span className="field-label">Escritório responsável</span><input className="field" value={firm} onChange={event => setFirm(event.target.value)} maxLength={100} required disabled={busy || blocked} /></label></div>
       {action === 'ACORDO' && <><button type="button" className="button-secondary" disabled={busy || blocked || !amount.trim()} onClick={() => evaluation.run(() => negotiate(caseData.id, parseAmount(amount)), setComparison)}>Consultar faixa de negociação</button><ErrorNotice error={evaluation.error} />{comparison && <p role="status" className="notice">{comparison.explanation} {comparison.requires_approval ? 'Requer aprovação.' : 'Dentro do teto registrado.'}</p>}</>}
       <label className="block"><span className="field-label">Justificativa {override ? '(obrigatória para divergir da política)' : '(opcional)'}</span><textarea className="field" value={reason} onChange={event => setReason(event.target.value)} minLength={5} maxLength={2000} required={override} disabled={busy || blocked} /></label>
       <button className="button-primary" disabled={busy || blocked}>Revisar decisão</button>
     </form>}
-    {operation.pending && <Busy>Processando decisão...</Busy>}{evaluation.pending && <Busy>Consultando a faixa...</Busy>}
+    {operation.pending && <Busy>Registrando decisão...</Busy>}{evaluation.pending && <Busy>Consultando a faixa...</Busy>}
   </div>
 }
