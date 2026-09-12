@@ -135,3 +135,60 @@ def run_counterfactual_simulation(
         "roi_multiple": round(gross_avoided_losses / total_settlement_disbursement, 2) if total_settlement_disbursement > 0 else 2.0,
         "sensitivity_curve": sensitivity_curve,
     }
+
+
+def simulate_uf_savings(
+    df_merged: pd.DataFrame,
+    uf_target: str,
+    target_discount_rate: float = 0.50,
+    author_acceptance_rate: float = 0.65,
+    lawyer_adherence_rate: float = 0.90,
+) -> Dict[str, Any]:
+    """Calcula a simulação contrafactual e ROI filtrado por uma UF específica.
+    
+    Args:
+        df_merged: Base de dados com processos
+        uf_target: Sigla do estado (ex: "SP", "MA", "RJ", "AM", "BA")
+        target_discount_rate: Deságio proposto (default: 50%)
+        author_acceptance_rate: Taxa esperada de aceite do autor (default: 65%)
+        lawyer_adherence_rate: Taxa de adesão dos advogados à política (default: 90%)
+        
+    Returns:
+        Dicionário com o Cost Avoidance e métricas específicas da UF.
+    """
+    if "UF" not in df_merged.columns or df_merged.empty:
+        return {
+            "uf": uf_target.upper(),
+            "total_cases": 0,
+            "eligible_for_settlement_count": 0,
+            "effective_agreements_count": 0,
+            "net_cost_avoidance": 0.0,
+            "savings_percentage": 0.0,
+            "roi_multiple": 1.0,
+            "sensitivity_curve": [],
+        }
+        
+    uf_clean = uf_target.strip().upper()
+    df_uf = df_merged[df_merged["UF"].astype(str).str.upper() == uf_clean]
+    
+    if len(df_uf) == 0:
+        return {
+            "uf": uf_clean,
+            "total_cases": 0,
+            "eligible_for_settlement_count": 0,
+            "effective_agreements_count": 0,
+            "net_cost_avoidance": 0.0,
+            "savings_percentage": 0.0,
+            "roi_multiple": 1.0,
+            "sensitivity_curve": [],
+        }
+        
+    sim_result = run_counterfactual_simulation(
+        df_uf,
+        target_discount_rate=target_discount_rate,
+        author_acceptance_rate=author_acceptance_rate,
+        lawyer_adherence_rate=lawyer_adherence_rate,
+    )
+    sim_result["uf"] = uf_clean
+    sim_result["total_cases"] = len(df_uf)
+    return sim_result

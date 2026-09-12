@@ -18,6 +18,19 @@ def client(app):
         yield test_client
 
 
+def test_health_endpoints(client):
+    res_health = client.get("/health")
+    assert res_health.status_code == 200
+    data = res_health.json()
+    assert data["status"] == "healthy"
+    assert "version" in data
+    assert "data_mode" in data
+
+    res_api_health = client.get("/api/health")
+    assert res_api_health.status_code == 200
+    assert res_api_health.json()["status"] == "healthy"
+
+
 def test_case_pagination_has_no_overlap_and_reports_total(client):
     first = client.get("/api/cases?page=1&page_size=1")
     second = client.get("/api/cases?page=2&page_size=1")
