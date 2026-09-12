@@ -1,0 +1,1015 @@
+{
+  "components": {
+    "schemas": {
+      "AnalyzeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "examples": [
+              1
+            ],
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
+      "AnalyzeResponse": {
+        "properties": {
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_status": {
+            "default": "mock",
+            "enum": [
+              "available",
+              "unavailable",
+              "mock"
+            ],
+            "title": "Policy Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "policy",
+          "explanation",
+          "warnings",
+          "data_mode"
+        ],
+        "title": "AnalyzeResponse",
+        "type": "object"
+      },
+      "CaseDetail": {
+        "properties": {
+          "case_number": {
+            "title": "Case Number",
+            "type": "string"
+          },
+          "cause_value": {
+            "minimum": 0.0,
+            "title": "Cause Value",
+            "type": "number"
+          },
+          "claims": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/CaseDocument"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Id",
+            "type": "integer"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "DEFESA",
+                  "ACORDO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "BAIXO",
+                  "MEDIO",
+                  "ALTO",
+                  "CRITICO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "status": {
+            "enum": [
+              "PENDENTE",
+              "EM_ANALISE",
+              "CONCLUIDO"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "sub_issue": {
+            "title": "Sub Issue",
+            "type": "string"
+          },
+          "subsidies": {
+            "$ref": "#/components/schemas/SubsidyPresence"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "uf": {
+            "enum": [
+              "AC",
+              "AL",
+              "AM",
+              "AP",
+              "BA",
+              "CE",
+              "DF",
+              "ES",
+              "GO",
+              "MA",
+              "MG",
+              "MS",
+              "MT",
+              "PA",
+              "PB",
+              "PE",
+              "PI",
+              "PR",
+              "RJ",
+              "RN",
+              "RO",
+              "RR",
+              "RS",
+              "SC",
+              "SE",
+              "SP",
+              "TO"
+            ],
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "case_number",
+          "title",
+          "uf",
+          "sub_issue",
+          "cause_value",
+          "status",
+          "subsidies",
+          "data_mode",
+          "claims",
+          "documents"
+        ],
+        "title": "CaseDetail",
+        "type": "object"
+      },
+      "CaseDocument": {
+        "properties": {
+          "category": {
+            "enum": [
+              "AUTOS",
+              "SUBSIDIO"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null enquanto o arquivo não estiver disponível para download.",
+            "title": "Download Url"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "text_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Excerpt"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "document_type"
+        ],
+        "title": "CaseDocument",
+        "type": "object"
+      },
+      "CaseListResponse": {
+        "properties": {
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Total após os filtros, antes da paginação.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "total_pages": {
+            "minimum": 0.0,
+            "title": "Total Pages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages",
+          "data_mode"
+        ],
+        "title": "CaseListResponse",
+        "type": "object"
+      },
+      "CaseSummary": {
+        "properties": {
+          "case_number": {
+            "title": "Case Number",
+            "type": "string"
+          },
+          "cause_value": {
+            "minimum": 0.0,
+            "title": "Cause Value",
+            "type": "number"
+          },
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Id",
+            "type": "integer"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "DEFESA",
+                  "ACORDO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "BAIXO",
+                  "MEDIO",
+                  "ALTO",
+                  "CRITICO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "status": {
+            "enum": [
+              "PENDENTE",
+              "EM_ANALISE",
+              "CONCLUIDO"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "sub_issue": {
+            "title": "Sub Issue",
+            "type": "string"
+          },
+          "subsidies": {
+            "$ref": "#/components/schemas/SubsidyPresence"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "uf": {
+            "enum": [
+              "AC",
+              "AL",
+              "AM",
+              "AP",
+              "BA",
+              "CE",
+              "DF",
+              "ES",
+              "GO",
+              "MA",
+              "MG",
+              "MS",
+              "MT",
+              "PA",
+              "PB",
+              "PE",
+              "PI",
+              "PR",
+              "RJ",
+              "RN",
+              "RO",
+              "RR",
+              "RS",
+              "SC",
+              "SE",
+              "SP",
+              "TO"
+            ],
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "case_number",
+          "title",
+          "uf",
+          "sub_issue",
+          "cause_value",
+          "status",
+          "subsidies",
+          "data_mode"
+        ],
+        "title": "CaseSummary",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MonitoringOverviewResponse": {
+        "properties": {
+          "active_lawyers_count": {
+            "minimum": 0.0,
+            "title": "Active Lawyers Count",
+            "type": "integer"
+          },
+          "adherence_rate": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adherence Rate"
+          },
+          "avg_negotiation_time_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Negotiation Time Days"
+          },
+          "data_mode": {
+            "enum": [
+              "mock",
+              "real",
+              "artifacts",
+              "manual"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
+          "metrics_status": {
+            "default": "mock",
+            "enum": [
+              "mock",
+              "partial",
+              "available"
+            ],
+            "title": "Metrics Status",
+            "type": "string"
+          },
+          "partner_law_firms_count": {
+            "minimum": 0.0,
+            "title": "Partner Law Firms Count",
+            "type": "integer"
+          },
+          "total_cases": {
+            "minimum": 0.0,
+            "title": "Total Cases",
+            "type": "integer"
+          },
+          "total_cost_avoidance": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Avoidance"
+          }
+        },
+        "required": [
+          "total_cases",
+          "adherence_rate",
+          "total_cost_avoidance",
+          "avg_negotiation_time_days",
+          "active_lawyers_count",
+          "partner_law_firms_count",
+          "data_mode"
+        ],
+        "title": "MonitoringOverviewResponse",
+        "type": "object"
+      },
+      "PolicyResult": {
+        "properties": {
+          "applied_rules": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applied Rules",
+            "type": "array"
+          },
+          "confidence_score": {
+            "description": "Score original do motor (0 a 1), sem inversão ou recálculo. Só representa probabilidade de derrota quando confidence_score_semantics=loss_probability.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Score",
+            "type": "number"
+          },
+          "confidence_score_semantics": {
+            "default": "unspecified",
+            "description": "Significado declarado pelo produtor. Ausência no resultado da B1 ou em análises antigas permanece unspecified; não inferir a partir da ação.",
+            "enum": [
+              "loss_probability",
+              "recommendation_confidence",
+              "unspecified"
+            ],
+            "title": "Confidence Score Semantics",
+            "type": "string"
+          },
+          "reasoning_code": {
+            "enum": [
+              "DOSSIE_NAO_CONFORME",
+              "POWER_PAIR_AUSENTE",
+              "FALHA_PROBATORIA",
+              "USUFRUTO_COMPROVADO",
+              "CADEIA_COMPLETA",
+              "ML_ZONA_CINZENTA"
+            ],
+            "title": "Reasoning Code",
+            "type": "string"
+          },
+          "recommendation": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "risk_level": {
+            "enum": [
+              "BAIXO",
+              "MEDIO",
+              "ALTO",
+              "CRITICO"
+            ],
+            "title": "Risk Level",
+            "type": "string"
+          },
+          "settlement_pricing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettlementPricing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "recommendation",
+          "reasoning_code",
+          "confidence_score",
+          "risk_level"
+        ],
+        "title": "PolicyResult",
+        "type": "object"
+      },
+      "SettlementPricing": {
+        "properties": {
+          "ceiling": {
+            "minimum": 0.0,
+            "title": "Ceiling",
+            "type": "number"
+          },
+          "expected_loss": {
+            "minimum": 0.0,
+            "title": "Expected Loss",
+            "type": "number"
+          },
+          "floor": {
+            "minimum": 0.0,
+            "title": "Floor",
+            "type": "number"
+          },
+          "target": {
+            "minimum": 0.0,
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "floor",
+          "target",
+          "ceiling",
+          "expected_loss"
+        ],
+        "title": "SettlementPricing",
+        "type": "object"
+      },
+      "SubsidyPresence": {
+        "properties": {
+          "has_contract": {
+            "title": "Has Contract",
+            "type": "boolean"
+          },
+          "has_credit_receipt": {
+            "title": "Has Credit Receipt",
+            "type": "boolean"
+          },
+          "has_debt_evolution": {
+            "title": "Has Debt Evolution",
+            "type": "boolean"
+          },
+          "has_dossier": {
+            "title": "Has Dossier",
+            "type": "boolean"
+          },
+          "has_referenced_report": {
+            "title": "Has Referenced Report",
+            "type": "boolean"
+          },
+          "has_statement": {
+            "title": "Has Statement",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "has_contract",
+          "has_statement",
+          "has_credit_receipt",
+          "has_dossier",
+          "has_debt_evolution",
+          "has_referenced_report"
+        ],
+        "title": "SubsidyPresence",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Fase 1 da branch 2: contratos HTTP com dados fictícios. Todas as respostas de dados incluem data_mode=mock. Não há leitura da base de 60 mil casos ou chamadas à OpenAI nesta fase.",
+    "title": "Suits AI — Backend",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/analyze": {
+      "post": {
+        "description": "Fase 1: resposta fixa de demonstração, sem IA ou modelo de risco.",
+        "operationId": "analyze_case_api_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Caso não encontrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Obter parecer simulado para um caso",
+        "tags": [
+          "Análise"
+        ]
+      }
+    },
+    "/api/cases": {
+      "get": {
+        "operationId": "list_cases_api_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "PENDENTE",
+                    "EM_ANALISE",
+                    "CONCLUIDO"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "uf",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "AC",
+                    "AL",
+                    "AM",
+                    "AP",
+                    "BA",
+                    "CE",
+                    "DF",
+                    "ES",
+                    "GO",
+                    "MA",
+                    "MG",
+                    "MS",
+                    "MT",
+                    "PA",
+                    "PB",
+                    "PE",
+                    "PI",
+                    "PR",
+                    "RJ",
+                    "RN",
+                    "RO",
+                    "RR",
+                    "RS",
+                    "SC",
+                    "SE",
+                    "SP",
+                    "TO"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Listar casos com filtros",
+        "tags": [
+          "Casos"
+        ]
+      }
+    },
+    "/api/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_api_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Caso não encontrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Consultar autos e subsídios de um caso",
+        "tags": [
+          "Casos"
+        ]
+      }
+    },
+    "/api/monitoring/overview": {
+      "get": {
+        "operationId": "overview_api_monitoring_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Consultar visão geral simulada",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    }
+  }
+}
