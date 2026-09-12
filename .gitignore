@@ -6,6 +6,7 @@
 # Dados sensíveis — não versionar
 data/subsidios/
 data/processos_exemplo/
+data/dataset_raw_60k.csv
 
 # Dependências de pacotes
 node_modules/
