@@ -5,6 +5,7 @@
 
 # Dados sensíveis — não versionar
 data/*.csv
+data/*.parquet
 data/subsidios/
 data/processos_exemplo/
 
