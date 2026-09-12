@@ -1,56 +1,44 @@
-import { useEffect, useState } from 'react'
-import { ArrowUpRight, BarChart3, FileCheck2 } from 'lucide-react'
-import { requestJson } from '../../services/api'
+import { useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { RefreshCw } from 'lucide-react'
+import { fetchDecisions, requestJson } from '../../services/api'
+import { dateTime, money } from '../../services/workflow'
+import { useRemote } from '../../hooks/useRemote'
+import { Busy, ErrorNotice, OffsetPager } from '../../components/Workspace/Shared'
+
+const subsidyNames = { has_contract: 'Contrato', has_statement: 'Extrato bancário', has_credit_receipt: 'Comprovante de crédito', has_dossier: 'Dossiê', has_debt_evolution: 'Evolução da dívida', has_referenced_report: 'Laudo referenciado' }
+const percent = value => value == null ? '—' : (value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
 
 export default function MonitoringPage() {
-  const [overview, setOverview] = useState(null)
-  const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [showSimulation, setShowSimulation] = useState(false)
-  const [acceptanceRate, setAcceptanceRate] = useState(65)
-
-  useEffect(() => {
-    let active = true
-    requestJson('/api/monitoring/overview').then(data => {
-      if (active) { setOverview(data); setLoading(false) }
-    }).catch(() => { if (active) { setError(true); setLoading(false) } })
-    return () => { active = false }
-  }, [])
-
-  const amount = value => value == null ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
-  const percent = value => value == null ? '—' : (value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
-  const metrics = [
-    { label: 'Economia estimada', value: showSimulation ? 'R$ 58,4M' : amount(overview?.total_cost_avoidance), note: showSimulation ? 'Valor ilustrativo' : 'Economia no contencioso' },
-    { label: 'Taxa de aderência', value: showSimulation ? '91,8%' : percent(overview?.adherence_rate), note: 'Seguimento das recomendações' },
-    { label: 'Tempo de negociação', value: showSimulation ? '12 dias' : overview?.avg_negotiation_time_days == null ? '—' : overview.avg_negotiation_time_days + ' dias', note: 'Tempo médio até o acordo' },
-    { label: 'Processos', value: showSimulation ? '60.000' : overview?.total_cases?.toLocaleString('pt-BR') ?? '—', note: showSimulation ? 'Volume ilustrativo' : 'Casos cadastrados' },
+  const [offset, setOffset] = useState(0)
+  const metrics = useRemote(useCallback(async signal => {
+    const [overview, subsidies, adherence, effectiveness] = await Promise.all(['overview', 'subsidies', 'adherence', 'effectiveness'].map(name => requestJson('/api/monitoring/' + name, { signal })))
+    return { overview, subsidies, adherence, effectiveness }
+  }, []))
+  const decisions = useRemote(useCallback(signal => fetchDecisions(undefined, offset, { signal }), [offset]))
+  const { overview, subsidies, adherence, effectiveness } = metrics.data || {}
+  const refresh = () => { metrics.reload(); decisions.reload() }
+  const cards = [
+    { label: 'Processos', value: overview?.total_cases?.toLocaleString('pt-BR') ?? '—', note: 'Casos cadastrados' },
+    { label: 'Decisões registradas', value: decisions.data?.total?.toLocaleString('pt-BR') ?? '—', note: 'Registros preservados no backend' },
+    { label: 'Economia estimada', value: money(overview?.total_cost_avoidance), note: 'Indicador financeiro' },
+    { label: 'Taxa de aderência', value: percent(overview?.adherence_rate), note: 'Seguimento das recomendações' },
   ]
-
-  return (
-    <div className="space-y-7">
-      <p className="eyebrow">CONTENCIOSO / GOVERNANÇA</p>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 border-b border-line pb-7">
-        <div className="space-y-3"><h1>Uma visão de toda a operação.</h1><p className="text-sm text-muted">Acompanhe o contencioso e os resultados de cada decisão.</p></div>
-        <button type="button" aria-pressed={showSimulation} onClick={() => setShowSimulation(!showSimulation)} className="inline-flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-line text-xs hover:bg-accent-soft">{showSimulation ? 'Voltar aos dados da operação' : 'Explorar simulação'}<ArrowUpRight size={15} /></button>
-      </div>
-      {showSimulation ? <p role="status" className="rounded-lg bg-accent-soft border border-accent/40 p-4 text-xs text-accent-ink leading-relaxed"><strong>Simulação de apresentação.</strong> Todos os valores abaixo são ilustrativos e não representam os resultados dos casos cadastrados.</p> : error ? <p role="alert" className="rounded-lg bg-negative-soft p-4 text-xs text-negative">Não foi possível carregar os indicadores. Recarregue a página para tentar novamente.</p> : <p role="status" className="text-xs text-muted">{loading ? 'Carregando indicadores...' : overview?.metrics_status === 'available' ? 'Indicadores disponíveis para os casos cadastrados.' : 'Contagens disponíveis. Os demais indicadores aguardam dados validados.'}</p>}
-      <div className="grid grid-cols-2 lg:grid-cols-4 border border-line rounded-lg overflow-hidden">
-        {metrics.map(metric => <div key={metric.label} className="metric-cell"><p className="eyebrow">{metric.label}</p><p className="metric-value">{metric.value}</p><p className="text-[11px] text-muted">{metric.note}</p></div>)}
-      </div>
-      <section className="border border-line rounded-lg p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4"><div><p className="eyebrow mb-2">CENÁRIOS DE ACORDO</p><h2 className="text-2xl">O impacto de cada possibilidade.</h2><p className="text-xs text-muted mt-3 max-w-xl leading-relaxed">{showSimulation ? 'Explore como uma taxa de aceite diferente altera esta projeção ilustrativa.' : 'A simulação permite explorar cenários de aceite. As projeções não são indicadores operacionais.'}</p></div><span className="text-xs text-accent-ink border border-line rounded px-2.5 py-1.5 shrink-0">{showSimulation ? 'Simulação' : 'Em preparação'}</span></div>
-        {showSimulation ? <div className="mt-8"><div className="flex items-end justify-between gap-4 mb-7"><span className="text-sm text-muted">Projeção ilustrativa de economia</span><strong className="text-3xl font-normal tracking-tight">R$ {(58.4 * acceptanceRate / 65).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}M</strong></div><label htmlFor="acceptance" className="text-xs text-muted">Taxa de aceite: {acceptanceRate}%</label><input id="acceptance" type="range" min="30" max="90" step="5" value={acceptanceRate} onChange={e => setAcceptanceRate(Number(e.target.value))} className="w-full my-4" /><div className="flex justify-between text-[10px] text-muted"><span>30% · Conservador</span><span>90% · Otimista</span></div></div> : <div className="mt-8 pt-6 border-t border-line flex items-center gap-3 text-xs text-muted"><BarChart3 size={22} strokeWidth={1.2} /><p>Use “Explorar simulação” para conhecer a interação com valores de demonstração.</p></div>}
-      </section>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-        <section className="border border-line rounded-lg p-6">
-          <p className="eyebrow mb-3">ESCRITÓRIOS</p><h2 className="text-2xl">Aderência por equipe</h2>
-          {showSimulation ? <div className="mt-6 space-y-5">{[{ name: 'Escritório A', rate: 96.2 }, { name: 'Escritório B', rate: 94 }, { name: 'Escritório C', rate: 86.4 }].map(item => <div key={item.name}><div className="flex justify-between text-xs mb-2"><span>{item.name}</span><span>{item.rate.toLocaleString('pt-BR')}%</span></div><div className="h-1 bg-surface-hover"><div className="h-1 bg-accent" style={{ width: item.rate + '%' }} /></div></div>)}</div> : <div className="empty-panel"><BarChart3 size={27} strokeWidth={1} /><p>Os indicadores de aderência por equipe ainda não estão disponíveis.</p></div>}
-        </section>
-        <section className="border border-line rounded-lg p-6">
-          <p className="eyebrow mb-3">DOCUMENTAÇÃO</p><h2 className="text-2xl">Qualidade dos subsídios</h2>
-          {showSimulation ? <div className="mt-6 divide-y divide-line">{[{ name: 'Contrato', rate: '12,1%' }, { name: 'Extrato bancário', rate: '8,3%' }, { name: 'Comprovante de crédito', rate: '18,4%' }].map(item => <div key={item.name} className="flex items-center justify-between gap-3 py-4 text-xs"><span>{item.name}</span><span className="text-muted">{item.rate} ausente</span></div>)}</div> : <div className="empty-panel"><FileCheck2 size={27} strokeWidth={1} /><p>Os indicadores de qualidade documental ainda não estão disponíveis nesta visão.</p></div>}
-        </section>
-      </div>
+  return <div className="space-y-7">
+    <p className="eyebrow">CONTENCIOSO / GOVERNANÇA</p>
+    <div className="section-heading border-b border-line pb-7"><div><h1>Uma visão de toda a operação.</h1><p className="text-sm text-muted mt-3">Acompanhe o contencioso e os resultados de cada decisão.</p></div><button type="button" className="button-secondary" disabled={metrics.loading || decisions.loading} onClick={refresh}><RefreshCw size={14} />Atualizar governança</button></div>
+    {metrics.loading && <Busy>Consultando indicadores...</Busy>}<ErrorNotice error={metrics.error} retry={metrics.reload} />
+    {overview?.data_mode === 'mock' && <p className="notice">O backend está usando dados de demonstração.</p>}
+    <div className="grid grid-cols-2 lg:grid-cols-4 border border-line rounded-lg overflow-hidden">{cards.map(card => <div key={card.label} className="metric-cell"><p className="eyebrow">{card.label}</p><p className="metric-value">{card.value}</p><p className="text-[11px] text-muted">{card.note}</p></div>)}</div>
+    <div className="flex flex-wrap gap-6 text-xs text-muted"><p>Advogados com decisões: <strong className="text-ink">{overview?.active_lawyers_count ?? '—'}</strong></p><p>Escritórios com decisões: <strong className="text-ink">{overview?.partner_law_firms_count ?? '—'}</strong></p><p>Tempo médio de negociação: <strong className="text-ink">{overview?.avg_negotiation_time_days == null ? '—' : overview.avg_negotiation_time_days + ' dias'}</strong></p></div>
+    <div className="grid md:grid-cols-2 gap-6">
+      <section className="panel space-y-5"><p className="eyebrow">DOCUMENTAÇÃO</p><h2 className="text-2xl">Disponibilidade dos subsídios</h2><p className="text-xs text-muted">Inventário de presença documental em {subsidies?.total_cases ?? '—'} processos. Presença não atesta autenticidade ou conformidade.</p><div className="divide-y divide-line">{Object.entries(subsidies?.missing_by_type || {}).map(([type, count]) => <div key={type} className="flex justify-between gap-4 py-3 text-xs"><span>{subsidyNames[type] || type}</span><span className="text-muted">{count} {count === 1 ? 'ausência' : 'ausências'}</span></div>)}</div></section>
+      <section className="panel space-y-5"><p className="eyebrow">INDICADORES</p><h2 className="text-2xl">Aderência e efetividade</h2>{[['Aderência', adherence], ['Efetividade', effectiveness]].map(([title, data]) => <div key={title}><h3 className="text-sm font-semibold mb-2">{title}</h3><p className="text-xs text-muted leading-relaxed">{data?.status === 'pending_integration' ? 'Os indicadores validados ainda não estão disponíveis para esta operação.' : data?.message || 'Aguardando dados do serviço.'}</p>{data?.status === 'pending_integration' && <p className="text-[10px] text-accent-ink mt-2">Aguardando indicadores · {data.decision_count} {data.decision_count === 1 ? 'decisão disponível' : 'decisões disponíveis'} para cálculo</p>}</div>)}</section>
     </div>
-  )
+    <section className="panel space-y-5"><div className="section-heading"><div><p className="eyebrow">HISTÓRICO DA OPERAÇÃO</p><h2>Decisões registradas</h2></div><span className="text-xs text-muted">{decisions.data?.total ?? '—'} {decisions.data?.total === 1 ? 'registro' : 'registros'}</span></div>
+      <ErrorNotice error={decisions.error} retry={decisions.reload} />
+      {decisions.loading ? <Busy>Carregando decisões...</Busy> : <div className="space-y-3">{decisions.data?.items.map(record => <article key={record.decision.decision_id} className="saved-item"><div className="flex flex-wrap justify-between gap-3"><Link to={'/workspace/' + record.decision.case_id} className="font-semibold underline underline-offset-4">Processo #{record.decision.case_id} · {record.decision.action}</Link><span>{record.decision.settlement_amount == null ? 'Defesa' : money(record.decision.settlement_amount)}</span></div><p className="text-xs text-muted">{record.registration.lawyer_id} · {record.registration.law_firm_id} · {dateTime(record.decision.created_at)}</p><p className="text-xs">{record.decision.is_override === null ? 'Sem política disponível no registro' : record.decision.is_override ? 'Divergência justificada' : 'Aderente à política'}</p>{record.registration.override_reason && <p className="response-text">{record.registration.override_reason}</p>}</article>)}{!decisions.data?.items.length && <p className="text-xs text-muted py-6">As decisões aparecerão aqui depois de registradas no workspace.</p>}</div>}
+      <OffsetPager page={decisions.data} offset={offset} setOffset={setOffset} disabled={decisions.loading} />
+    </section>
+  </div>
 }
