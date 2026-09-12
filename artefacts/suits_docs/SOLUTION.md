@@ -11,9 +11,13 @@
 
 O **Banco Unicamp** enfrenta um volume de **~15.000 novos processos judiciais cíveis por mês**, dos quais cerca de **~5.000 casos** tratam de **não reconhecimento de contratação de empréstimo** (o consumidor alega descontos indevidos referentes a contratos que afirma não ter firmado).
 
-Historicamente, a taxa de acordos do banco foi inferior a **0,5%**, resultando em desembolsos massivos com condenações judiciais (danos materiais, danos morais e sucumbência). Diante de cada processo, o banco precisa decidir estrategicamente: **Contestar (Defesa Judicial)** ou **Propor Acordo (Encerramento Imediato)**.
+A auditoria e jurimetria empírica sobre a base histórica de **60.000 processos** revelou os seguintes fatos estruturantes:
+- **Taxa Histórica de Acordos:** Apenas **0,47%** (280 acordos em 60 mil processos).
+- **Desembolso em Condenações:** **R$ 192,98 milhões** pagos (taxa de condenação de **30,1%** entre os casos sem acordo, com ticket médio de **R$ 10.658,35**).
+- **O Fator Crítico (Power Pair):** A ausência conjunta de **Contrato e Extrato** eleva a taxa de condenação para **97,3%**, enquanto a presença de ambos reduz para **6,9%**.
+- **Concentração de Risco:** 36,0% dos casos (onde falta pelo menos Contrato ou Extrato) concentram **85,3% de todas as condenações e desembolsos financeiros**.
 
-Nossa solução foi projetada do zero como uma plataforma nativa para o ecossistema **EnterOS**, unindo auditoria probatória automatizada, jurimetria preditiva com **Random Forest**, precificação atuarial, geração de peças e governança contínua de aderência e efetividade.
+Nossa solução foi projetada do zero como uma plataforma nativa para o ecossistema **EnterOS**, unindo auditoria probatória automatizada, jurimetria preditiva com **Random Forest calibrado**, precificação atuarial em duas partes, geração de peças e governança contínua de aderência e efetividade.
 
 ---
 
@@ -23,42 +27,46 @@ Nossa arquitetura foi desenhada a partir dos seguintes pilares autorais:
 
 ```mermaid
 flowchart TD
-    subgraph P1["1. Auditoria Probatória Semântica & Antifraude"]
-        A["Autos Processuais + Subsídios do Banco"] --> B{"Dossiê Pericial:\nNÃO CONFORME?"}
-        B -- "SIM (Fraude confirmada)" --> DEC_AC1["Acordo Fast-Track\n(Estancar Danos Morais & Custas)"]
-        B -- "NÃO / AUSENTE" --> C{"Cadeia Probatória:\nContrato + TED + BACEN?"}
-        C -- "3 Críticos + Usufruto" --> DEC_DEF["Defesa Robusta\n(Improcedência > 85%)"]
-        C -- "0 ou 1 Crítico" --> DEC_AC2["Acordo Estratégico\n(Inversão Ônus CDC)"]
-        C -- "2 Críticos" --> D["Modelo Jurimétrico (Random Forest)\n(Probabilidade de Perda Real Calibrada)"]
-        D --> DEC_ZONA{"Risco da Comarca"}
-        DEC_ZONA -- "Alto" --> DEC_AC3["Acordo"]
-        DEC_ZONA -- "Baixo" --> DEC_DEF2["Defesa"]
+    subgraph P1["1. Auditoria Probatória & Regras de Triagem Rápida"]
+        A["Autos Processuais + Subsídios do Banco"] --> B{"Dossiê Pericial:\nNÃO CONFORME (Fraude)?"}
+        B -- "SIM" --> DEC_AC1["Acordo Fast-Track\n(Estancar Danos Morais & Custas)"]
+        B -- "NÃO / AUSENTE" --> C{"Subsídios Críticos:\nContrato + Extrato + BACEN"}
+        C -- "Sem Contrato & Sem Extrato (0 Críticos)" --> DEC_AC2["Acordo Imediato\n(Risco Histórico = 97,3%)"]
+        C -- "3 Críticos Completos (Contrato+Extrato+BACEN)" --> DEC_DEF["Defesa Robusta\n(Risco Histórico = 4,0%)"]
+        C -- "Zona Cinzenta (1 ou 2 Críticos / UF de Risco / Golpe)" --> D["Random Forest Calibrado (AUC 0,923)\nProbabilidade Contínua P(derrota)"]
+        D --> DEC_ZONA{"P(derrota) >= Limiar Ótimo"}
+        DEC_ZONA -- "SIM" --> DEC_AC3["Acordo Estratégico"]
+        DEC_ZONA -- "NÃO" --> DEC_DEF2["Defesa com Subsídios"]
     end
 
-    subgraph P2["2. Precificação Atuarial (Pricing de Acordo)"]
-        DEC_AC1 & DEC_AC2 & DEC_AC3 --> E["Cálculo do Custo Esperado de Perda E(Perda)\nE(Perda) = P(derrota) x (Débito + Dano Moral Comarca + Custas)"]
-        E --> F["Régua de Alçada de Negociação:\n- Piso de Abertura\n- Valor Alvo\n- Teto Autorizado"]
+    subgraph P2["2. Precificação Atuarial em Duas Partes (Pricing de Acordo)"]
+        DEC_AC1 & DEC_AC2 & DEC_AC3 --> E["Cálculo do Custo Esperado de Perda:\nE(Perda) = P(derrota) x E(Condenação | Derrota)\n(Ticket médio histórico = R$ 10.658 + Dano Moral Regional)"]
+        E --> F["Régua de Alçada Dinâmica:\n- Piso de Abertura (~60% do Alvo)\n- Valor Alvo (Economia >= 45%)\n- Teto Autorizado"]
     end
 
     subgraph P3["3. Copiloto do Advogado (EnterOS Workflow)"]
-        DEC_DEF & DEC_DEF2 --> G["Geração de Minuta de Contestação Judicial (1 Clique)"]
-        F --> H["Geração de Minuta de Termo de Acordo / WhatsApp (1 Clique)\n+ Copiloto Interativo de Contrapropostas"]
+        DEC_DEF & DEC_DEF2 --> G["Geração de Minuta de Contestação Judicial (1 Clique WeasyPrint)"]
+        F --> H["Geração de Minuta de Termo de Acordo / WhatsApp (1 Clique WeasyPrint)\n+ Copiloto Interativo de Contrapropostas"]
     end
 
     subgraph P4["4. Cockpit Gerencial do Banco Unicamp"]
-        G & H --> I["Métricas de Aderência dos Escritórios (A01-A20)\n+ Métricas de Efetividade Financeira & ROI (E01-E20)"]
+        G & H --> I["Métricas de Aderência dos Escritórios (A01-A20)\n+ Métricas de Efetividade Financeira & ROI (E01-E20)\n+ Diagnóstico de Gargalos na Localização de Subsídios"]
     end
 ```
 
 ---
 
-## 3. Por que Random Forest na Modelagem Jurimétrica?
+## 3. Por que ainda precisamos do Random Forest (AUC 0,923)?
 
-Para a classificação de risco e probabilidade de perda em processos judiciais cíveis massificados, o **Random Forest** apresenta vantagens estruturais decisivas:
+Embora as regras determinísticas resolvam os casos extremos (0 subsídios $\rightarrow$ Acordo com 97,3% de risco; 3 subsídios $\rightarrow$ Defesa com 4% de risco), o **Random Forest** é indispensável por dois motivos técnicos e negociais cruciais:
 
-1. **Robustez a Ruídos Tabulares:** Processos judiciais contêm variações abruptas de valores da causa e jurisprudência regional. O ensemble de árvores do Random Forest reduz variância e evita o risco de overfitting inerente a modelos com boosting excessivamente agressivo.
-2. **Explicabilidade e Transparência Jurídica:** As decisões do Random Forest são decomponíveis em caminhos de decisão (*decision paths*) auditáveis, essencial para justificar pareceres a comitês jurídicos e órgãos reguladores.
-3. **Calibração Probabilística Estável:** Combinado com CalibratedClassifierCV, entrega probabilidades confiáveis de perda ($P(\text{derrota})$) sem distorções nos extremos.
+1. **Desempate na Zona Cinzenta (36% da carteira):**
+   - Casos com apenas Extrato (risco de 61,4%) ou apenas Contrato (risco de 59,5%) sofrem grande variação conforme a **UF** (de 20,5% no MA a 48,0% no AP/AM) e o **Subassunto** (casos de *Golpe* têm 36,0% de risco vs 16,8% em *Genérico*).
+   - O Random Forest pondera simultaneamente: `[Contrato, Extrato, BACEN, Dossiê, Demonstrativo, Laudo, UF, Subassunto, Log(Valor Causa)]`, atingindo **AUC de 0,923** e **Brier score de 0,092**.
+2. **Alimentação Contínua do Motor Atuarial de Pricing:**
+   - O cálculo do valor da proposta de acordo exige uma probabilidade contínua e calibrada ($P(\text{derrota})$). Uma regra booleana estática não permite calcular com precisão se a alçada deve ser R$ 2.800 ou R$ 5.400. O Random Forest calibrado via `CalibratedClassifierCV` fornece essa estimativa atuarial precisa.
+3. **Robustez e Explicabilidade:**
+   - Não sofre de overfitting em dados tabulares jurídicos e permite extrair a importância das features (Contrato: -62,5pp, Extrato: -62,9pp, BACEN: -26,8pp), justificando o parecer de forma transparente para o advogado e o comitê de auditoria.
 
 ---
 
@@ -120,7 +128,7 @@ Nossa plataforma entrega valor real do início ao fim do processo de trabalho do
    - **Caso DEFESA:** Gera a minuta formal da **Contestação Judicial** em PDF timbrado, com fundamentação fática, citação expressa dos subsídios probatórios válidos anexados (CCB, TED, BACEN) e pedidos de improcedência.
    - **Caso ACORDO:** Gera a minuta do **Termo de Transação / Acordo Judicial** em PDF timbrado (com cláusulas de quitação plena, estorno e extinção pelo art. 487, III, 'b', CPC) + **Script padronizado de proposta para WhatsApp/E-mail**.
    - Ambas as minutas podem ser editadas diretamente na interface antes do download em PDF oficial ou exportação em Word/texto.
-5. **Copiloto de Negociação:** Simulador em tempo real que avalia contrapropostas do autor contra a alçada do banco.
+6. **Copiloto de Negociação:** Simulador em tempo real que avalia contrapropostas do autor contra a alçada do banco.
 
 ---
 

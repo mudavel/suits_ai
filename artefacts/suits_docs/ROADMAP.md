@@ -63,19 +63,19 @@ suits_ai/
 
 * **🌿 Pessoa 1 (`feature/policy-engine-ml`):**
   - [ ] Criar `src/policy/schemas.py` com os modelos Pydantic (`PolicyResult`, `SettlementPricing`).
-  - [ ] Criar `scripts/01_prepare_data.py` e validar a leitura das 60.000 sentenças de `artefacts/Hackaton Unicamp/Hackaton_Enter_Base_Candidatos.xlsx`.
-  - [ ] Estabelecer o cálculo do baseline de custos históricos do Banco Unicamp.
+  - [ ] Criar `scripts/01_prepare_data.py` com carregamento automático da base de 60k sentenças (`data/Hackaton_Enter_Base_Candidatos.xlsx` ou `artefacts/Hackaton Unicamp/`), estruturando as 9 features comprovadas no relatório.
+  - [ ] Estabelecer o cálculo do baseline de custos históricos do Banco Unicamp (R$ 192,98M em condenações, 30,1% condenação sem acordo, ticket médio R$ 10.658).
 * **🌿 Pessoa 2 (`feature/backend-api-copilot`):**
   - [ ] Inicializar o servidor FastAPI em `backend/main.py` com suporte a CORS e Uvicorn.
-  - [ ] Criar rotas mockadas com contratos definidos no `SPEC.md` (`GET /api/cases`, `GET /api/cases/{id}`, `POST /api/analyze`).
-  - [ ] Validar documentação interativa em `http://localhost:8000/docs` para a Pessoa 3 consumir.
+  - [ ] Criar rotas mockadas com contratos definidos no `SPEC.md` (`GET /api/cases`, `GET /api/cases/{id}`, `POST /api/analyze`, `GET /api/monitoring/overview`).
+  - [ ] Validar documentação interativa OpenAPI em `http://localhost:8000/docs` para a Pessoa 3 consumir.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
   - [ ] Configurar React 19 + Vite com Tailwind/CSS e roteamento em `frontend/`.
-  - [ ] Construir a tela de **Triagem de Casos** consumindo a lista mockada da API do backend.
-  - [ ] Criar o esqueleto do layout da página de **Workspace do Processo**.
+  - [ ] Construir a tela de **Triagem de Casos** consumindo a lista da API do backend.
+  - [ ] Criar o esqueleto do layout da página de **Workspace do Processo** e da página de **Cockpit de Monitoramento** (`frontend/src/pages/Monitoring/`).
 * **🌿 Pessoa 4 (`feature/governance-monitoring-dashboard`):**
-  - [ ] Estruturar o dataset enriquecido com advogados e escritórios parceiros sintéticos.
-  - [ ] Montar o cálculo básico de simulação contrafactual de economia financeira.
+  - [ ] Estruturar o dataset enriquecido com advogados e escritórios parceiros sintéticos em `src/monitor/`.
+  - [ ] Montar o cálculo analítico da simulação contrafactual de economia financeira (*Cost Avoidance* de R$ 55M a R$ 68M/ano).
   - [ ] Criar o esqueleto da apresentação de slides em `docs/presentation.md` (ou Figma/Deck).
 
 ---
@@ -84,26 +84,28 @@ suits_ai/
 *Meta: Desenvolver os cérebros de cada frente de forma desacoplada.*
 
 * **🌿 Pessoa 1 (`feature/policy-engine-ml`):**
-  - [ ] `scripts/02_train_model.py`: Treinar o **Random Forest jurimétrico calibrado** e exportar `artefatos/modelo_jurimetrico.pkl`.
-  - [ ] `src/policy/engine.py`: Implementar a matriz híbrida (Dossiê NÃO CONFORME $\rightarrow$ Acordo Fast-Track, 3 críticos $\rightarrow$ Defesa, 0-1 crítico $\rightarrow$ Acordo, 2 críticos $\rightarrow$ Random Forest).
-  - [ ] `src/policy/pricing.py`: Implementar o cálculo atuarial de $\mathbb{E}[\text{Perda}]$ e régua de alçada (Piso, Alvo, Teto).
-  - [ ] Escrever testes unitários em `tests/test_policy.py` e `tests/test_pricing.py`.
+  - [ ] `scripts/02_train_model.py`: Treinar o **Random Forest jurimétrico calibrado** com validação cruzada atingindo $AUC \ge 0,92$ e $Brier \le 0,095$, exportando `artefatos/modelo_jurimetrico.pkl`.
+  - [ ] `src/policy/engine.py`: Implementar a matriz híbrida empírica (Dossiê NÃO CONFORME $\rightarrow$ Acordo Fast-Track, Sem Contrato e Sem Extrato $\rightarrow$ Acordo Imediato [97,3% risco], 3 críticos $\rightarrow$ Defesa [4,0% risco], Zona Cinzenta $\rightarrow$ Random Forest Calibrado).
+  - [ ] `src/policy/pricing.py`: Implementar o modelo atuarial em duas partes $\mathbb{E}[\text{Perda}] = P(\text{derrota}) \times \mathbb{E}[\text{Condenação}|\text{derrota}]$ e régua de alçada (Piso ~60%, Alvo, Teto).
+  - [ ] Escrever testes unitários em `tests/test_policy.py` e `tests/test_pricing.py` cobrindo os 10 decis de calibração.
 * **🌿 Pessoa 2 (`feature/backend-api-copilot`):**
-  - [ ] `backend/services/document_service.py`: Leitura e extração de dados dos casos reais (Casos 01 e 02 dos arquivos ZIP).
+  - [ ] `backend/services/document_service.py`: Leitura e extração de dados dos casos reais (Casos 01 e 02 dos arquivos ZIP/data).
   - [ ] `POST /api/scenarios`: Endpoint de War Room judicial (Teses do Atacante/Autor vs. Tendências do Juiz da comarca).
   - [ ] `POST /api/chat`: Chat Copilot interativo com GPT-4o contextualizado no caso.
-  - [ ] `POST /api/generate-draft` & `POST /api/export-pdf`: Gerador de minutas de Contestação e Termo de Acordo em PDF timbrado via **WeasyPrint**.
+  - [ ] `POST /api/generate-draft` & `POST /api/export-pdf`: Gerador de minutas de Contestação e Termo de Acordo em PDF timbrado via **WeasyPrint** (com fallback HTML printable).
+  - [ ] Endpoints de Monitoramento (`/api/monitoring/overview`, `/api/monitoring/adherence`, `/api/monitoring/effectiveness`, `/api/monitoring/subsidies`) integrados ao motor analítico da Pessoa 4.
   - [ ] `backend/database/`: Persistência SQLite para salvar decisões e feedbacks/overrides dos advogados.
 * **🌿 Pessoa 3 (`feature/frontend-lawyer-platform`):**
   - [ ] Concluir o **Workspace Split-View** (Autos da Ação à esquerda e Subsídios do Banco à direita).
   - [ ] Implementar o card de **Simulação de Cenários Judiciais** (War Room).
   - [ ] Implementar o painel lateral do **Chat Jurídico Copilot** com *quick prompts*.
   - [ ] Implementar o módulo de **Minutas & Negociação** (Visualizador/Editor da minuta + Botão de Download PDF + Simulador Interativo de Alçada de Acordo).
+  - [ ] Implementar a página do **Cockpit de Monitoramento** em React (`frontend/src/pages/Monitoring/`) consumindo os endpoints `/api/monitoring/*`.
   - [ ] Implementar o modal de **Conclusão de Caso** com registro de desfecho e justificativa de override.
 * **🌿 Pessoa 4 (`feature/governance-monitoring-dashboard`):**
   - [ ] `src/monitor/metrics_adherence.py`: Implementar métricas de Aderência (A01–A20: taxa de seguimento, overrides por escritório/advogado).
   - [ ] `src/monitor/metrics_effectiveness.py`: Implementar métricas de Efetividade (E01–E20: economia real, sensibilidade de aceite).
-  - [ ] Construir o **Cockpit de Monitoramento do Banco Unicamp** com filtros dinâmicos por UF, Escritório e Slider de Aceite.
+  - [ ] Fornecer os esquemas e cálculos consolidados para os endpoints FastAPI de monitoramento e validação dos gráficos no React.
   - [ ] Redigir o roteiro do vídeo demo de 2 minutos (`docs/video_script.md`).
 
 ---
