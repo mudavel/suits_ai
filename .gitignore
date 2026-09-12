@@ -4,9 +4,7 @@
 *.env.*.local
 
 # Dados sensíveis — não versionar
-data/*.csv
-data/subsidios/
-data/processos_exemplo/
+data/dataset_raw_60k.csv
 
 # Dependências de pacotes
 node_modules/
@@ -20,6 +18,7 @@ dist/
 build/
 .next/
 .nuxt/
+pytest_cache/
 
 # Outputs e artefatos
 *.log
@@ -44,6 +43,3 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-
-
-artefacts/hackathon-ufmg-2026-grupo9-master
