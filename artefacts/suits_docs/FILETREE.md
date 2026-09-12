@@ -29,15 +29,16 @@ suits_ai/
 │   │   ├── pricing.py                 # Pricing atuarial e régua de alçada
 │   │   └── schemas.py                 # DTOs do policy engine
 │   │
-│   └── monitor/                       # 📊 Governança & Contrafactual (Branch 4)
-│       ├── counterfactual.py          # Simulação de ROI e Cost Avoidance
-│       ├── generator.py               # Enriquecimento sintético e métricas
-│       └── schemas.py                 # DTOs de aderência e efetividade
-│
-├── frontend/                          # 💻 Aplicação Web React 19 + Vite (Branch 3)
-│   ├── src/                           # Componentes, páginas e hooks
-│   ├── public/
-│   └── package.json
+│   ├── monitor/                       # 📊 Governança & Contrafactual (Branch 4)
+│   │   ├── counterfactual.py          # Simulação de ROI e Cost Avoidance
+│   │   ├── generator.py               # Enriquecimento sintético e métricas
+│   │   └── schemas.py                 # DTOs de aderência e efetividade
+│   │
+│   └── frontend/                      # 💻 Aplicação Web React 19 + Vite (Branch 3)
+│       ├── src/                       # Componentes, páginas e hooks
+│       ├── public/
+│       ├── package.json
+│       └── vite.config.js
 │
 ├── tests/                             # 🧪 Suíte única de testes automatizados
 │   ├── test_policy.py                 # Testes do motor de regras/ML
@@ -61,6 +62,9 @@ suits_ai/
 │   ├── Hackaton Unicamp/              # Planilhas, PDFs e ZIPs dos casos
 │   └── suits_docs/                    # Documentos históricos, especificações e modelos
 │       ├── FILETREE.md                # Este documento de referência
+│       ├── SETUP.md                   # Guia de instalação e execução
+│       ├── README.md                  # Entregáveis e documentação
+│       ├── presentation.md            # Apresentação executiva
 │       ├── ROADMAP.md                 # Cronograma de desenvolvimento
 │       ├── SPEC.md                    # Especificações técnicas e contratos
 │       ├── SOLUTION.md                # Solução arquitetural e matemática
@@ -70,30 +74,23 @@ suits_ai/
 │       ├── features.json              # Metadados de features do modelo
 │       └── baseline_stats.json        # Estatísticas de baseline histórico
 │
-├── docs/                              # 📑 Entregas executivas
-│   ├── presentation.md                # Roteiro/Slides da apresentação (15 min)
-│   └── README.md
-│
 ├── .env.example                       # Modelo de variáveis de ambiente
 ├── pytest.ini                         # Configuração global de testes
 ├── requirements.txt                   # Dependências unificadas do projeto
 ├── run.py                             # 🚀 Orquestrador (python run.py sobe o FastAPI)
-├── README.md                          # Visão geral da solução
-├── SETUP.md                           # Guia de instalação e execução
-├── SPEC.md                            # Especificação técnica dos contratos
-├── ROADMAP.md                         # Cronograma e divisões
-└── SOLUTION.md                        # Arquitetura e formulação matemática
+└── README.md                          # Visão geral da solução
 ```
 
 ---
 
 ## 📌 Diretrizes de Cada Módulo
 
-1. **`src/` (Core Python)**:
-   - Todo código executável em Python vive exclusivamente em `src/`.
-   - `src/backend/`: API HTTP, roteamento e integrações externas (OpenAI).
-   - `src/policy/`: Motor jurimétrico puro e determinístico.
-   - `src/monitor/`: Cálculo de métricas e simulações executivas.
+1. **`src/` (Módulos da Aplicação)**:
+   - Todo o código executável do projeto vive sob `src/`.
+   - `src/backend/`: API HTTP FastAPI, rotas e serviços.
+   - `src/policy/`: Motor jurimétrico e precificação atuarial.
+   - `src/monitor/`: Cálculo de governança e simulação contrafactual.
+   - `src/frontend/`: Aplicação web React 19 + Vite.
 
 2. **`tests/` (Testes Unificados)**:
    - Todos os testes residem na raiz `tests/`, garantindo execução rápida com `pytest`.

@@ -1,6 +1,7 @@
 # Setup e Execução — Suits AI (EnterOS)
 
-Guia completo para configuração do ambiente, execução de testes e inicialização da aplicação.
+Guia para configuração do ambiente, execução de testes e inicialização da aplicação.
+Execute os comandos a partir da raiz do repositório, salvo quando indicado outro diretório.
 
 ---
 
@@ -84,6 +85,18 @@ python run.py
 - **API REST / Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
+### Iniciar o Frontend (React + Vite)
+
+Em outro terminal, inicie a interface de usuário:
+
+```bash
+cd src/frontend
+npm install
+npm run dev
+```
+
+- **Aplicação Web:** [http://localhost:5173](http://localhost:5173)
+
 ---
 
 Para testar pelo Swagger, execute primeiro `GET /api/cases` e escolha um ID.
@@ -91,7 +104,7 @@ Para testar pelo Swagger, execute primeiro `GET /api/cases` e escolha um ID.
 recupera o parecer salvo. `POST /api/chat` recebe `case_id` e `message`.
 No modo `openai`, as rotas de geração fazem chamadas à API configurada.
 Os demais corpos e respostas estão detalhados no Swagger e no
-[README do backend](src/backend/README.md).
+[README do backend](../../src/backend/README.md).
 
 ## 5. Estrutura do Projeto
 
@@ -100,18 +113,22 @@ suits_ai/
 ├── src/
 │   ├── backend/         # Servidor FastAPI, Routers, Serviços e Schemas DTO
 │   ├── policy/          # Motor de decisão jurimétrica, regras e pricing atuarial
-│   └── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
-├── frontend/            # Aplicação React + Vite (disponível na branch frontend)
+│   ├── monitor/         # Métricas de governança (A01-A20, E01-E20) e contrafactual
+│   └── frontend/        # Aplicação React 19 + Vite (UI do Advogado e Cockpit)
 ├── tests/               # Testes automatizados (API, Policy, Pricing, Monitor)
 ├── data/                # Bases de dados operacionais e amostras (.csv)
 ├── scripts/             # Pipelines de dados, treino do modelo e simulações
 ├── artefacts/           # Insumos brutos, documentações e modelos (.pkl, .json)
-├── docs/                # Slides executivos, especificações e documentação
+│   ├── Hackaton Unicamp/ # Planilhas, PDFs e ZIPs dos casos
+│   └── suits_docs/      # Setup, especificações, apresentação e modelos
+│       ├── SETUP.md     # Este guia de instalação e execução
+│       ├── FILETREE.md  # Estrutura de referência
+│       ├── SPEC.md      # Contratos técnicos
+│       ├── ROADMAP.md   # Cronograma e divisões
+│       ├── SOLUTION.md  # Arquitetura da solução
+│       └── presentation.md # Apresentação executiva
 ├── requirements.txt     # Dependências unificadas do projeto
 ├── pytest.ini           # Configuração unificada do Pytest
 ├── run.py               # Orquestrador de execução da aplicação
-├── SPEC.md              # Especificação técnica e contratos de interface
-├── ROADMAP.md           # Cronograma de desenvolvimento e divisões
-├── SOLUTION.md          # Detalhamento arquitetural da solução
 └── README.md            # Visão geral e contextualização do desafio
 ```

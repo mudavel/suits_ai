@@ -6,10 +6,10 @@ com as outras frentes; não representa um acordo já aprovado por todos.
 
 | Frente | Referência inspecionada | Resultado |
 |---|---|---|
-| Base | `origin/master` — `bb43897` | PRs de B1/B2/B4 incorporados e estrutura unificada |
+| Base | `origin/master` — `f0da73c` | PR #5 incorporado; frontend em `src/frontend/` e documentação em `artefacts/suits_docs/` |
 | B1 | `src/policy/` no master `bb43897` | Regras e score preservados; loader aponta para `artefacts/suits_docs/` |
-| B2 | `feature/backend-api-copilot`, base `bb43897` | Fase 2 local em `src/backend/`, testes em `tests/`, dependências na raiz |
-| B3 | `origin/frontend` — `43fe8e0` | Branch publicada; serviço HTTP inspecionado, execução conjunta ainda pendente |
+| B2 | `feature/backend-api-copilot`, base `f0da73c` | Fase 2 no PR #4, testes em `tests/`, dependências na raiz |
+| B3 | PR #5, incorporado em `f0da73c` | Código em `src/frontend/`; integração funcional com B2 ainda pendente |
 | B4 | `src/monitor/` no master `bb43897` | Módulo e testes incorporados; contrato operacional ainda pendente |
 
 ## Fontes do contrato
@@ -18,7 +18,7 @@ com as outras frentes; não representa um acordo já aprovado por todos.
   no [`openapi.json`](openapi.json), gerado pela própria aplicação.
 - A B1 é responsável por [`CaseData`, `PolicyResult` e regras](../policy/schemas.py).
 - A B4 é responsável pelos [DTOs de governança](../monitor/schemas.py).
-- O [SPEC do master](../../SPEC.md)
+- O [SPEC do master](../../artefacts/suits_docs/SPEC.md)
   define os campos iniciais. As diferenças efetivas estão descritas aqui para
   impedir que mocks ou exemplos sejam confundidos com o contrato final.
 
@@ -97,7 +97,7 @@ comprovação das estatísticas cabem à frente responsável antes da apresenta�
 Todas as rotas previstas para a B2 no SPEC existem. A lista abaixo destaca os
 pontos que o frontend precisa respeitar; tipos completos estão no OpenAPI.
 
-Em `origin/frontend` (`43fe8e0`), `frontend/src/services/api.js` consulta as rotas
+Em `master` (`f0da73c`), `src/frontend/src/services/api.js` consulta as rotas
 `/api/cases` e `/api/cases/{id}`, preservadas por esta migração. O serviço retorna
 o JSON bruto em `data`; a lista da B2 contém `items` e os campos usam snake_case,
 enquanto os mocks da UI usam array e camelCase. A B3 precisa mapear o contrato
@@ -244,7 +244,7 @@ os documentos estão em outro diretório. Os testes não fazem chamadas pagas.
 
 ## Estrutura e sincronização
 
-A base desta branch foi avançada para `bb43897` do master. A segunda fase foi
+A base desta branch incorpora `f0da73c` do master, após o merge do PR #5. A segunda fase foi
 reaplicada em `src/backend/`, com os testes em `tests/`, OpenAPI em
 `src/backend/openapi.json` e dependências no `requirements.txt` unificado.
 `python run.py` inicia a API; o `.env` permanece na raiz. Instalações existentes
@@ -252,7 +252,9 @@ devem preservar seu `SUITS_DATABASE_PATH`. Se usavam o caminho padrão antigo,
 configure-o explicitamente antes de iniciar para manter o histórico existente.
 
 As alterações compartilhadas desta migração abrangem `requirements.txt`,
-`.env.example`, `.gitignore`, `SETUP.md` e o carregamento de configuração no
+`.env.example`, `.gitignore`, `artefacts/suits_docs/SETUP.md` e o carregamento de configuração no
 `run.py`. Regras da B1, indicadores da B4, scripts de dados e código do frontend
 continuam nas frentes responsáveis. O PR #3 incorporou apenas a fase 1; as
-alterações da segunda fase continuam locais até sua publicação.
+alterações da segunda fase estão publicadas no PR #4. A resolução do conflito
+de documentação preserva as instruções de backend e frontend no novo caminho,
+sem alterar o código dessas frentes.

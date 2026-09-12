@@ -1,8 +1,8 @@
 # Backend — branch 2
 
 API FastAPI de `feature/backend-api-copilot`, seguindo o
-[`ROADMAP.md`](../../ROADMAP.md) e o
-[`SPEC.md`](../../SPEC.md). Esta versão acrescenta documentos,
+[`ROADMAP.md`](../../artefacts/suits_docs/ROADMAP.md) e o
+[`SPEC.md`](../../artefacts/suits_docs/SPEC.md). Esta versão acrescenta documentos,
 conversas, minutas, exportação e persistência à fundação da fase 1.
 
 O modelo padrão desta implementação foi atualizado para GPT-6 Astra. Essa
