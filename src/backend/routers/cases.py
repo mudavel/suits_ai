@@ -14,7 +14,7 @@ async def list_cases(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     status: CaseStatus | None = None,
-    uf: Annotated[UF | None, Query()] = None,
+    uf: UF | None = None,
 ) -> CaseListResponse:
     return await cases.list_cases(page=page, page_size=page_size, status=status, uf=uf)
 

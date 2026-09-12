@@ -6,6 +6,9 @@ from src.backend.schemas import (
     CaseListResponse,
     CaseStatus,
     MonitoringOverviewResponse,
+    MetricsResponse,
+    NegotiationResponse,
+    SubsidiesInventoryResponse,
 )
 
 
@@ -20,6 +23,14 @@ class CaseService(Protocol):
 class AnalysisService(Protocol):
     async def analyze(self, case: CaseDetail) -> AnalyzeResponse: ...
 
+    async def negotiate(self, case: CaseDetail, proposed_amount: float) -> NegotiationResponse: ...
+
 
 class MonitoringService(Protocol):
     async def overview(self) -> MonitoringOverviewResponse: ...
+
+    async def adherence(self) -> MetricsResponse: ...
+
+    async def effectiveness(self) -> MetricsResponse: ...
+
+    async def subsidies(self) -> SubsidiesInventoryResponse: ...

@@ -19,6 +19,9 @@ build/
 .next/
 .nuxt/
 pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Outputs e artefatos
 *.log
@@ -42,4 +45,3 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
-
