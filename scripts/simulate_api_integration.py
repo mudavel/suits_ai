@@ -50,7 +50,7 @@ def analyze_case_endpoint(case: CaseData):
 
 def main():
     print("=" * 75)
-    print("🚀 SIMULAÇÃO DA INTEGRAÇÃO BACKEND FASTAPI (PESSOA 2) -> ENGINE (PESSOA 1)")
+    print("SIMULAÇÃO DA INTEGRAÇÃO BACKEND FASTAPI (PESSOA 2) -> ENGINE (PESSOA 1)")
     print("=" * 75)
     
     client = TestClient(app)
@@ -74,7 +74,7 @@ def main():
         }
     }
     
-    print("\n📩 [POST /api/analyze] Enviando Caso 01 (Autos com todos os subsídios)...")
+    print("\n[POST /api/analyze] Enviando Caso 01 (Autos com todos os subsídios)...")
     res1 = client.post("/api/analyze", json=payload_caso_01)
     print(f"Status HTTP: {res1.status_code} OK")
     print("Resposta JSON devolvida para o Frontend:")
@@ -99,7 +99,7 @@ def main():
     }
     
     print("\n" + "-" * 75)
-    print("📩 [POST /api/analyze] Enviando Caso 02 (Sem contrato e sem comprovante de TED)...")
+    print("[POST /api/analyze] Enviando Caso 02 (Sem contrato e sem comprovante de TED)...")
     res2 = client.post("/api/analyze", json=payload_caso_02)
     print(f"Status HTTP: {res2.status_code} OK")
     print("Resposta JSON devolvida para o Frontend:")
@@ -123,14 +123,14 @@ def main():
     }
     
     print("\n" + "-" * 75)
-    print("📩 [POST /api/analyze] Enviando Caso de Zona Cinzenta (2 críticos: avaliado por ML)...")
+    print("[POST /api/analyze] Enviando Caso de Zona Cinzenta (2 críticos: avaliado por ML)...")
     res3 = client.post("/api/analyze", json=payload_caso_zona_cinzenta)
     print(f"Status HTTP: {res3.status_code} OK")
     print("Resposta JSON devolvida para o Frontend:")
     print(json.dumps(res3.json(), indent=2, ensure_ascii=False))
     
     print("\n" + "=" * 75)
-    print("✅ INTEGRAÇÃO VALIDADA! O motor da Pessoa 1 está pronto para o backend FastAPI.")
+    print("INTEGRAÇÃO VALIDADA! O motor da Pessoa 1 está pronto para o backend FastAPI.")
     print("=" * 75)
 
 
