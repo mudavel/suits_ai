@@ -10,6 +10,7 @@ from src.backend.schemas import (
     AnalyzeRequest, CaseCreateRequest, CaseDetail, ChatHistoryResponse, ChatRequest, ChatResponse, ChatSessionListResponse,
     DecisionListResponse, DecisionRequest, DecisionResponse, DocumentContent, DraftRequest, DraftResponse,
     DraftListResponse, ExportRequest, NegotiationRequest, NegotiationResponse, ScenariosResponse, StoredAnalysisResponse,
+    StrategyRequest, StrategyResponse, StoredStrategyResponse,
 )
 
 router = APIRouter(prefix="/api")
@@ -25,6 +26,17 @@ async def stored_analysis(case_id: PositiveId, request: Request, cases: Cases):
     analysis = await request.app.state.store.latest_analysis(case_id)
     status = "not_found" if analysis is None else "available" if analysis.case_version == case.version else "stale"
     return StoredAnalysisResponse(case_id=case_id, case_version=case.version, status=status, analysis=analysis)
+
+
+@router.get("/cases/{case_id}/strategy", response_model=StoredStrategyResponse, tags=["Encaminhamento"])
+async def stored_strategy(case_id: PositiveId, request: Request, cases: Cases):
+    await require_case(case_id, cases)
+    return await request.app.state.store.stored_strategy(case_id)
+
+
+@router.post("/strategy", response_model=StrategyResponse, status_code=201, tags=["Encaminhamento"])
+async def save_strategy(payload: StrategyRequest, request: Request):
+    return await request.app.state.store.save_strategy(payload)
 
 
 @router.get("/cases/{case_id}/chats", response_model=ChatSessionListResponse, tags=["Copiloto"],

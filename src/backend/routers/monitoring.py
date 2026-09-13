@@ -1,9 +1,15 @@
 from fastapi import APIRouter
 
 from src.backend.dependencies import Monitoring
-from src.backend.schemas import MonitoringOverviewResponse, MetricsResponse, SubsidiesInventoryResponse
+from src.backend.schemas import LawyerAdherenceResponse, MonitoringOverviewResponse, MetricsResponse, SubsidiesInventoryResponse
 
 router = APIRouter(prefix="/api/monitoring", tags=["Monitoramento"])
+
+
+@router.get("/lawyers", response_model=LawyerAdherenceResponse,
+            summary="Consultar aderência demonstrativa por advogado persistida no banco")
+async def lawyers(monitoring: Monitoring) -> LawyerAdherenceResponse:
+    return await monitoring.lawyers()
 
 
 @router.get(

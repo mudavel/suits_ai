@@ -1,4 +1,4 @@
-from src.backend.schemas import MetricsResponse, MonitoringOverviewResponse, SubsidiesInventoryResponse
+from src.backend.schemas import LawyerAdherenceResponse, MetricsResponse, MonitoringOverviewResponse, SubsidiesInventoryResponse
 
 
 class OperationalMonitoring:
@@ -21,6 +21,9 @@ class OperationalMonitoring:
 
     async def adherence(self) -> MetricsResponse:
         return MetricsResponse(decision_count=(await self.store.counts())["decision_count"])
+
+    async def lawyers(self) -> LawyerAdherenceResponse:
+        return LawyerAdherenceResponse(items=await self.store.demo_lawyer_adherence())
 
     async def effectiveness(self) -> MetricsResponse:
         return MetricsResponse(decision_count=(await self.store.counts())["decision_count"])

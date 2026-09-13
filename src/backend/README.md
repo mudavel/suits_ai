@@ -20,6 +20,8 @@ O [OpenAPI versionável](openapi.json) permite gerar o cliente sem subir a API.
 
 ## Executar
 
+Para desenvolvimento com API e frontend no mesmo terminal, use `python scripts/dev.py --env-file .env` na raiz (após instalar as dependências Python e executar `npm ci` em `src/frontend`). O script observa o código Python e o arquivo de ambiente indicado, reinicia somente a API quando eles mudam e mantém o Vite com HMR. `Ctrl+C` encerra os dois servidores. `--database CAMINHO` seleciona uma base existente. Variáveis definidas no terminal têm precedência sobre o `.env`.
+
 Python 3.10 ou superior; validado com CPython 3.12 no Windows. Na raiz do repo:
 
 ```powershell
@@ -63,6 +65,13 @@ O modo `local` faz extração, comparação e busca de trechos. Minutas usam mod
 editáveis e cenários organizam alegações e verificações. Ele não simula respostas
 de um LLM. O modo `openai` usa `AsyncOpenAI`, Responses API e saídas estruturadas
 com Pydantic. Cada resposta identifica `generation_mode`.
+
+O schema de cada chamada restringe `source_ids` aos identificadores exatos dos
+trechos enviados, inclusive nos argumentos da autora e da defesa. Sem trechos,
+a lista deve ficar vazia. A API também confere as referências antes de salvar:
+não aproxima IDs nem descarta silenciosamente citações desconhecidas. Essa
+restrição garante a existência da fonte; a revisão jurídica ainda precisa
+conferir se o trecho sustenta a afirmação feita.
 
 Para habilitar a IA, configure no ambiente local:
 
@@ -154,10 +163,14 @@ A análise retorna `analysis_id`, `case_version`, `policy`, `policy_status`,
 Esse é um ajuste em relação ao mock da fase 1: a interface precisa tratar a
 ausência de recomendação e de valores. `confidence_score`, quando disponível,
 preserva o score original entre 0 e 1. O SPEC do master o define como probabilidade
-de derrota, mas a B1 publicada usa confiança na recomendação em alguns caminhos.
-O campo adicional `confidence_score_semantics` declara o significado: somente
-`loss_probability` autoriza esse rótulo. Se o produtor não declarar o significado,
-o retorno é `unspecified`, com aviso em `warnings`; não se calcula `1 - score`.
+de derrota, mas as regras probatórias da B1 usam confiança na recomendação.
+O motor declara `confidence_score_semantics`: `recommendation_confidence` nas
+regras e na zona cinzenta com defesa; `loss_probability` na zona cinzenta com acordo.
+Ao ler pareceres antigos, a API reconhece a regra e sua trilha textual da B1 para
+completar essa descrição, sem alterar o índice, recalcular o parecer ou regravar
+o histórico. Valores explicitamente descritos por outro produtor são preservados.
+Resultados desconhecidos continuam `unspecified` e não são exibidos como percentual
+na interface; não se calcula `1 - score`.
 
 Ao reabrir um caso, consulte `GET /api/cases/{case_id}/analysis`. O envelope traz
 `case_id`, `case_version`, `status` e `analysis`. `status: not_found` com
@@ -214,6 +227,8 @@ caso. Sem política retorna `SEM_POLITICA`; sem faixa, `SEM_FAIXA`. A comparaç�
 não cria acordo, aceite ou aprovação institucional.
 
 ## Minutas e exportação
+
+O fluxo integrado usa `POST /api/strategy` para salvar `case_id`, `analysis_id`, `expected_case_version`, `action`, `settlement_amount` e `rationale`. `GET /api/cases/{case_id}/strategy` recupera o último encaminhamento com status `available`, `stale` ou `not_found`. O parecer agora persiste `author_arguments`, `defense_arguments` e `created_at` na mesma geração. Na minuta, envie `strategy_id` para usar essa fundamentação e validar a escolha/valor. Na conclusão, envie também `draft_id` e `reviewed_content_markdown`: o texto exato revisado fica no registro, preservando o original da minuta. Parecer novo invalida encaminhamentos anteriores; encaminhamento novo invalida peças anteriores para conclusão. O backend confere os vínculos antes e depois da geração e na transação final. Os formatos antigos sem vínculos continuam aceitos para compatibilidade.
 
 | Método | Rota | Uso |
 |---|---|---|
@@ -332,3 +347,19 @@ python -B -m src.backend.export_openapi
 O teste de contrato detecta diferenças entre o arquivo e o OpenAPI da aplicação.
 Os testes de contrato com o código de B1 do próprio repositório estão descritos em
 [INTEGRATION.md](INTEGRATION.md#reproduzir-a-verificacao).
+# Consulta da base histórica
+
+`GET /api/monitoring/historical` lê `Hackaton_Enter_Base_Candidatos.xlsx` em
+`SUITS_ARTIFACTS_DIR`. As abas `Resultados dos processos` e
+`Subsídios disponibilizados` são vinculadas pelo número do processo; identificadores
+ausentes, duplicados, sem correspondência e indicadores diferentes de 0/1 impedem
+a importação. Um índice SQLite em memória é criado na primeira consulta e refeito
+quando o arquivo muda. O Excel e os casos operacionais não são alterados.
+
+A resposta contém `items`, `total` filtrado, `total_cases`, paginação, opções dos
+filtros e origem. Cada caso contém as oito colunas de resultados, seis indicadores
+de subsídio, contagem de fornecidos e as linhas de origem em ambas as abas.
+Parâmetros: `q` (busca sem distinção de acentos/maiúsculas), `uf`, `subject`,
+`sub_subject`, `macro_result`, `micro_result`, `subsidy`, `presence` (`provided` ou
+`missing`), `sort`, `direction`, `page` e `page_size` (até 100). A ordenação e os
+filtros abrangem todos os registros. A falta ou inconsistência da fonte retorna 503.

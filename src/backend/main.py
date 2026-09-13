@@ -6,6 +6,8 @@ from starlette.concurrency import run_in_threadpool
 from src.backend.config import Settings
 from src.backend.routers import analysis, cases, monitoring
 from src.backend.routers import workflow
+from src.backend.routers import historical
+from src.backend.services.historical_service import HistoricalBase
 from src.backend.database.store import Store
 from src.backend.services.document_service import DocumentService
 from src.backend.services.copilot import Copilot
@@ -28,9 +30,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.store, app.state.documents, app.state.copilot = store, documents, copilot
         app.state.analysis = AnalysisService(settings, store, copilot)
         app.state.monitoring, app.state.pdf = OperationalMonitoring(store), PdfService()
+        app.state.historical = HistoricalBase(settings.artifacts_dir / 'Hackaton_Enter_Base_Candidatos.xlsx')
         try:
             yield
         finally:
+            app.state.historical.close()
             await copilot.close()
 
     app = FastAPI(
@@ -55,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(analysis.router)
     app.include_router(monitoring.router)
     app.include_router(workflow.router)
+    app.include_router(historical.router)
 
     @app.get("/health", tags=["Health"], summary="Health Check")
     async def health_check():

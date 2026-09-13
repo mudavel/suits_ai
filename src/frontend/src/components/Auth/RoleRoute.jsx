@@ -30,7 +30,7 @@ export default function RoleRoute({ allowedRoles, children }) {
             <span className="text-accent-ink">{currentProfile.name} ({currentProfile.badge})</span>
           </div>
           <p>
-            Advogados credenciados têm permissão de acesso à <strong>Triagem de Casos</strong> e ao <strong>Ambiente de Elaboração de Peças e Consulta de Alçada</strong>.
+            Advogados credenciados têm permissão de acesso à <strong>Triagem de Casos</strong> e ao <strong>Ambiente de Elaboração de Minutas e Consulta de Alçada</strong>.
           </p>
         </div>
 
@@ -51,13 +51,6 @@ export default function RoleRoute({ allowedRoles, children }) {
             <span>Alternar para Diretoria (Banco)</span>
           </button>
 
-          <button
-            onClick={() => switchProfile('FDE')}
-            className="w-full sm:w-auto px-4 py-2 bg-surface hover:bg-surface-hover border border-line text-ink text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
-          >
-            <UserCheck className="w-4 h-4 text-accent-ink" />
-            <span>Alternar para FDE (Enter AI)</span>
-          </button>
         </div>
       </div>
     )

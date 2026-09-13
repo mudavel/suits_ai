@@ -1,6 +1,21 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applyStoredAnalysis, currentAnalysis, decisionAttempt, parseAmount, policyScore, requiresOverride } from './workflow.js'
+import { applyStoredAnalysis, currentAnalysis, currentStrategy, draftMatchesStrategy, decisionAttempt, parseAmount, policyScore, requiresOverride } from './workflow.js'
+
+test('novo parecer invalida encaminhamento e nova orientação invalida a peça anterior', () => {
+  const caseData = { id: 2, version: 3, status: 'PENDENTE' }
+  const analysis = { analysis_id: 'parecer-1' }
+  const strategy = { strategy_id: 'estrategia-1', analysis_id: 'parecer-1', case_id: 2, case_version: 3 }
+  const envelope = { status: 'available', strategy }
+  const draft = { case_id: 2, case_version: 3, analysis_id: 'parecer-1', strategy }
+  assert.equal(currentStrategy(envelope, caseData, analysis), strategy)
+  assert.equal(currentStrategy(envelope, caseData, { analysis_id: 'parecer-2' }), null)
+  assert.equal(currentStrategy(envelope, { ...caseData, status: 'CONCLUIDO' }, analysis), null)
+  assert.equal(draftMatchesStrategy(draft, strategy), true)
+  assert.equal(draftMatchesStrategy(draft, { ...strategy, strategy_id: 'estrategia-2' }), false)
+  assert.equal(draftMatchesStrategy({ ...draft, analysis_id: 'parecer-antigo' }, strategy), false)
+  assert.equal(draftMatchesStrategy({ ...draft, strategy: null }, strategy), false)
+})
 
 test('parecer histórico, de outro caso ou versão não define a política atual', () => {
   const caseData = { id: 2, version: 3 }
@@ -12,10 +27,10 @@ test('parecer histórico, de outro caso ou versão não define a política atual
   assert.equal(currentAnalysis({ status: 'not_found', analysis: null }, caseData), null)
 })
 test('score só recebe o rótulo de derrota quando o produtor declara esse significado', () => {
-  assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'loss_probability' }).label, 'Probabilidade de derrota')
+  assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'loss_probability' }).label, 'Probabilidade estimada de derrota')
   assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'recommendation_confidence' }).label, 'Confiança na recomendação')
-  assert.match(policyScore({ confidence_score: .8 }).label, /interpretação não definida/)
-  assert.equal(policyScore({ confidence_score: .8 }).value, .8)
+  assert.equal(policyScore({ confidence_score: .8 }), null)
+  assert.equal(policyScore({ confidence_score: .8, confidence_score_semantics: 'unspecified' }), null)
   assert.equal(policyScore(null), null)
 })
 test('triagem usa política salva atual e não reaproveita valores históricos', () => {

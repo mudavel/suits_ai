@@ -5,7 +5,7 @@ o Backend FastAPI (Pessoa 2) e os Dashboards de Governança (Pessoa 4).
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -80,7 +80,11 @@ class PolicyResult(BaseModel):
         ...,
         ge=0.0,
         le=1.0,
-        description="Grau de confiança da recomendação (0.0 a 1.0)"
+        description="Índice de 0 a 1; confidence_score_semantics declara se é confiança na recomendação ou probabilidade de derrota"
+    )
+    confidence_score_semantics: Literal['recommendation_confidence', 'loss_probability'] = Field(
+        default='recommendation_confidence',
+        description='As regras probatórias retornam confiança na recomendação; a zona cinzenta com acordo retorna probabilidade de derrota.'
     )
     risk_level: str = Field(
         ...,

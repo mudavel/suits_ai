@@ -143,10 +143,13 @@ def test_analysis_rejects_missing_case_and_unspecified_input_fields(client, payl
     assert client.post("/api/analyze", json=payload).status_code == 422
 
 
-def test_analysis_does_not_change_case_state(client):
-    before = client.get("/api/cases/1").json()
-    client.post("/api/analyze", json={"case_id": 1})
-    assert client.get("/api/cases/1").json() == before
+def test_analysis_preserves_version_and_marks_pending_case_in_analysis(client):
+    before = client.get("/api/cases/2").json()
+    assert before["status"] == "PENDENTE"
+    client.post("/api/analyze", json={"case_id": 2})
+    after = client.get("/api/cases/2").json()
+    assert after["status"] == "EM_ANALISE"
+    assert after["version"] == before["version"]
 
 
 def test_overview_keeps_spec_fields_and_does_not_claim_real_savings(client):

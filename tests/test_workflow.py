@@ -86,6 +86,7 @@ def test_document_ids_are_scoped_to_cases(client):
 
 
 def test_analysis_without_engine_has_no_fabricated_policy(client):
+    assert client.get("/api/cases/2").json()["status"] == "PENDENTE"
     result = client.post("/api/analyze", json={"case_id": 2})
     assert result.status_code == 200
     data = result.json()
@@ -94,6 +95,8 @@ def test_analysis_without_engine_has_no_fabricated_policy(client):
     proposal = client.post("/api/negotiation-copilot", json={"case_id": 2, "proposed_amount": 1000}).json()
     assert proposal["status"] == "SEM_POLITICA"
     assert proposal["within_ceiling"] is None and proposal["requires_approval"]
+    assert client.get("/api/cases/2").json()["status"] == "EM_ANALISE"
+    assert any(item["id"] == 2 for item in client.get("/api/cases?status=EM_ANALISE").json()["items"])
 
 
 def test_chat_history_survives_restart_and_is_scoped_to_case(settings):

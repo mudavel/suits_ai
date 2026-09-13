@@ -33,6 +33,13 @@
             ],
             "title": "Analysis Id"
           },
+          "author_arguments": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioArgument"
+            },
+            "title": "Author Arguments",
+            "type": "array"
+          },
           "case_id": {
             "exclusiveMinimum": 0.0,
             "title": "Case Id",
@@ -43,6 +50,18 @@
             "title": "Case Version",
             "type": "integer"
           },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
           "data_mode": {
             "enum": [
               "mock",
@@ -52,6 +71,13 @@
             ],
             "title": "Data Mode",
             "type": "string"
+          },
+          "defense_arguments": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioArgument"
+            },
+            "title": "Defense Arguments",
+            "type": "array"
           },
           "document_checks": {
             "items": {
@@ -1002,6 +1028,18 @@
             "title": "Case Id",
             "type": "integer"
           },
+          "draft_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Id"
+          },
           "expected_case_version": {
             "minimum": 0.0,
             "title": "Expected Case Version",
@@ -1036,6 +1074,19 @@
               }
             ],
             "title": "Override Reason"
+          },
+          "reviewed_content_markdown": {
+            "anyOf": [
+              {
+                "maxLength": 60000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed Content Markdown"
           },
           "settlement_amount": {
             "anyOf": [
@@ -1285,6 +1336,18 @@
               }
             ],
             "title": "Settlement Amount"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
           }
         },
         "required": [
@@ -1296,6 +1359,18 @@
       },
       "DraftResponse": {
         "properties": {
+          "analysis_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
           "attached_subsidies": {
             "items": {
               "type": "string"
@@ -1306,6 +1381,17 @@
           "case_id": {
             "title": "Case Id",
             "type": "integer"
+          },
+          "case_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Version"
           },
           "content_markdown": {
             "title": "Content Markdown",
@@ -1346,6 +1432,16 @@
             "title": "Status",
             "type": "string"
           },
+          "strategy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -1367,6 +1463,18 @@
       },
       "DraftSummary": {
         "properties": {
+          "analysis_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
           "case_id": {
             "exclusiveMinimum": 0.0,
             "title": "Case Id",
@@ -1398,6 +1506,16 @@
             "const": "review_required",
             "title": "Status",
             "type": "string"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "title": {
             "title": "Title",
@@ -1499,6 +1617,65 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LawyerAdherenceResponse": {
+        "properties": {
+          "is_simulated": {
+            "const": true,
+            "default": true,
+            "title": "Is Simulated",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LawyerAdherenceRow"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "LawyerAdherenceResponse",
+        "type": "object"
+      },
+      "LawyerAdherenceRow": {
+        "properties": {
+          "adherence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Adherence",
+            "type": "number"
+          },
+          "decisions": {
+            "minimum": 0.0,
+            "title": "Decisions",
+            "type": "integer"
+          },
+          "law_firm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Law Firm"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "decisions",
+          "adherence"
+        ],
+        "title": "LawyerAdherenceRow",
         "type": "object"
       },
       "MetricsResponse": {
@@ -1726,7 +1903,7 @@
           },
           "confidence_score_semantics": {
             "default": "unspecified",
-            "description": "Significado declarado pelo produtor. Ausência no resultado da B1 ou em análises antigas permanece unspecified; não inferir a partir da ação.",
+            "description": "Significado declarado pelo produtor. Pareceres históricos reconhecidos da B1 usam o significado da regra registrada; outros resultados permanecem unspecified.",
             "enum": [
               "loss_probability",
               "recommendation_confidence",
@@ -1986,6 +2163,168 @@
           "analysis"
         ],
         "title": "StoredAnalysisResponse",
+        "type": "object"
+      },
+      "StoredStrategyResponse": {
+        "properties": {
+          "status": {
+            "enum": [
+              "available",
+              "stale",
+              "not_found"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "strategy"
+        ],
+        "title": "StoredStrategyResponse",
+        "type": "object"
+      },
+      "StrategyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "analysis_id": {
+            "format": "uuid",
+            "title": "Analysis Id",
+            "type": "string"
+          },
+          "case_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "expected_case_version": {
+            "minimum": 0.0,
+            "title": "Expected Case Version",
+            "type": "integer"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 5,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "settlement_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Amount"
+          }
+        },
+        "required": [
+          "case_id",
+          "analysis_id",
+          "expected_case_version",
+          "action"
+        ],
+        "title": "StrategyRequest",
+        "type": "object"
+      },
+      "StrategyResponse": {
+        "properties": {
+          "action": {
+            "enum": [
+              "DEFESA",
+              "ACORDO"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "analysis_id": {
+            "format": "uuid",
+            "title": "Analysis Id",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "integer"
+          },
+          "case_version": {
+            "title": "Case Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "settlement_amount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Amount"
+          },
+          "strategy_id": {
+            "format": "uuid",
+            "title": "Strategy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "case_id",
+          "case_version",
+          "analysis_id",
+          "action",
+          "settlement_amount",
+          "rationale",
+          "created_at"
+        ],
+        "title": "StrategyResponse",
         "type": "object"
       },
       "SubsidiesInventoryResponse": {
@@ -2724,6 +3063,49 @@
         ]
       }
     },
+    "/api/cases/{case_id}/strategy": {
+      "get": {
+        "operationId": "stored_strategy_api_cases__case_id__strategy_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Case Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredStrategyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stored Strategy",
+        "tags": [
+          "Encaminhamento"
+        ]
+      }
+    },
     "/api/chat": {
       "post": {
         "operationId": "chat_api_chat_post",
@@ -3069,6 +3451,217 @@
         ]
       }
     },
+    "/api/monitoring/historical": {
+      "get": {
+        "operationId": "historical_api_monitoring_historical_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "uf",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Uf",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Subject",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sub_subject",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Sub Subject",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "macro_result",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Macro Result",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "micro_result",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Micro Result",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subsidy",
+            "required": false,
+            "schema": {
+              "default": "",
+              "enum": [
+                "",
+                "contract",
+                "statement",
+                "credit_receipt",
+                "dossier",
+                "debt_evolution",
+                "referenced_report"
+              ],
+              "title": "Subsidy",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "presence",
+            "required": false,
+            "schema": {
+              "default": "provided",
+              "enum": [
+                "provided",
+                "missing"
+              ],
+              "title": "Presence",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "source_row",
+              "enum": [
+                "source_row",
+                "case_number",
+                "uf",
+                "subject",
+                "sub_subject",
+                "macro_result",
+                "micro_result",
+                "cause_value",
+                "condemnation_value",
+                "subsidy_count",
+                "contract",
+                "statement",
+                "credit_receipt",
+                "dossier",
+                "debt_evolution",
+                "referenced_report"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "asc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Consultar processos e subsídios da planilha histórica, com filtros e paginação",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    },
+    "/api/monitoring/lawyers": {
+      "get": {
+        "operationId": "lawyers_api_monitoring_lawyers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerAdherenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Consultar aderência demonstrativa por advogado persistida no banco",
+        "tags": [
+          "Monitoramento"
+        ]
+      }
+    },
     "/api/monitoring/overview": {
       "get": {
         "operationId": "overview_api_monitoring_overview_get",
@@ -3190,6 +3783,47 @@
         "summary": "Scenarios",
         "tags": [
           "Copiloto"
+        ]
+      }
+    },
+    "/api/strategy": {
+      "post": {
+        "operationId": "save_strategy_api_strategy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Strategy",
+        "tags": [
+          "Encaminhamento"
         ]
       }
     },
