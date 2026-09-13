@@ -11,6 +11,7 @@ from src.backend.schemas import (
     AnalyzeResponse, CaseCreateRequest, CaseDetail, CaseListResponse, CaseSummary,
     ChatSessionListResponse, DecisionListResponse, DecisionRequest, DecisionResponse,
     DraftListResponse, DraftResponse, DraftSummary, SubsidyPresence,
+    StrategyRequest, StrategyResponse, StoredStrategyResponse,
 )
 
 
@@ -36,6 +37,9 @@ class Store:
             await db.execute("PRAGMA journal_mode=WAL")
             await db.executescript("""
                 CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS demo_lawyer_adherence (
+                    name TEXT PRIMARY KEY, decisions INTEGER NOT NULL CHECK(decisions >= 0),
+                    adherence REAL NOT NULL CHECK(adherence BETWEEN 0 AND 1), law_firm TEXT);
                 CREATE TABLE IF NOT EXISTS cases (
                     id INTEGER PRIMARY KEY, case_number TEXT NOT NULL UNIQUE, uf TEXT NOT NULL,
                     status TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 0, payload TEXT NOT NULL);
@@ -53,11 +57,18 @@ class Store:
                 CREATE TABLE IF NOT EXISTS drafts (
                     id TEXT PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES cases(id), payload TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS drafts_case ON drafts(case_id);
+                CREATE TABLE IF NOT EXISTS strategies (
+                    id TEXT PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES cases(id),
+                    created_at TEXT NOT NULL, payload TEXT NOT NULL);
+                CREATE INDEX IF NOT EXISTS strategies_case ON strategies(case_id, created_at DESC);
                 CREATE TABLE IF NOT EXISTS decisions (
                     id TEXT PRIMARY KEY, case_id INTEGER NOT NULL UNIQUE REFERENCES cases(id),
                     idempotency_key TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL,
                     request_payload TEXT NOT NULL, response_payload TEXT NOT NULL, analysis_payload TEXT);
             """)
+            columns = await (await db.execute("PRAGMA table_info(demo_lawyer_adherence)")).fetchall()
+            if "law_firm" not in {column["name"] for column in columns}:
+                await db.execute("ALTER TABLE demo_lawyer_adherence ADD COLUMN law_firm TEXT")
             row = await (await db.execute("SELECT value FROM metadata WHERE key='data_mode'")).fetchone()
             if row and row["value"] != self.data_mode:
                 raise ValueError("O banco pertence a outro SUITS_DATA_MODE. Use outro SUITS_DATABASE_PATH.")
@@ -71,6 +82,14 @@ class Store:
                 elif previous["payload"] != payload:
                     await db.execute("UPDATE cases SET payload=?, uf=?, case_number=?, version=version+1 WHERE id=?",
                                      (payload, case.uf, case.case_number, case.id))
+            await db.execute("""
+                UPDATE cases SET status='EM_ANALISE'
+                WHERE status='PENDENTE' AND EXISTS (
+                    SELECT 1 FROM analyses
+                    WHERE analyses.case_id=cases.id
+                    AND CAST(json_extract(analyses.payload, '$.case_version') AS INTEGER)=cases.version
+                )
+            """)
             await db.commit()
 
     @staticmethod
@@ -116,7 +135,7 @@ class Store:
         return case
 
     async def save_analysis(self, result: AnalyzeResponse) -> AnalyzeResponse:
-        result = result.model_copy(update={"analysis_id": uuid4()})
+        result = result.model_copy(update={"analysis_id": uuid4(), "created_at": now()})
         async with self.connect() as db:
             await db.execute("BEGIN IMMEDIATE")
             row = await (await db.execute("SELECT version FROM cases WHERE id=?", (result.case_id,))).fetchone()
@@ -124,6 +143,10 @@ class Store:
                 raise HTTPException(409, "O caso mudou durante a análise. Recarregue os dados.")
             await db.execute("INSERT INTO analyses VALUES (?,?,?,?)",
                 (str(result.analysis_id), result.case_id, now().isoformat(), result.model_dump_json()))
+            await db.execute(
+                "UPDATE cases SET status='EM_ANALISE' WHERE id=? AND status='PENDENTE'",
+                (result.case_id,),
+            )
             await db.commit()
         return result
 
@@ -131,6 +154,58 @@ class Store:
         async with self.connect() as db:
             rows = await (await db.execute("SELECT payload FROM analyses WHERE case_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (case_id,))).fetchone()
         return AnalyzeResponse.model_validate_json(rows[0]) if rows else None
+
+    async def stored_strategy(self, case_id: int) -> StoredStrategyResponse:
+        async with self.connect() as db:
+            await db.execute("BEGIN")
+            row = await (await db.execute("SELECT payload FROM strategies WHERE case_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (case_id,))).fetchone()
+            if row is None:
+                return StoredStrategyResponse(status="not_found", strategy=None)
+            strategy = StrategyResponse.model_validate_json(row[0])
+            case = await (await db.execute("SELECT version,status FROM cases WHERE id=?", (case_id,))).fetchone()
+            analysis = await (await db.execute("SELECT id FROM analyses WHERE case_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (case_id,))).fetchone()
+        current = case and case["status"] != "CONCLUIDO" and case["version"] == strategy.case_version and analysis and analysis[0] == str(strategy.analysis_id)
+        return StoredStrategyResponse(status="available" if current else "stale", strategy=strategy)
+
+    async def _current_analysis(self, db, case_id, analysis_id, expected_version):
+        case = await (await db.execute("SELECT version,status FROM cases WHERE id=?", (case_id,))).fetchone()
+        if case is None:
+            raise HTTPException(404, "Caso não encontrado.")
+        row = await (await db.execute("SELECT payload FROM analyses WHERE case_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (case_id,))).fetchone()
+        analysis = AnalyzeResponse.model_validate_json(row[0]) if row else None
+        if (case["status"] == "CONCLUIDO" or case["version"] != expected_version or not analysis
+                or analysis.analysis_id != analysis_id or analysis.case_version != case["version"]):
+            raise HTTPException(409, "O parecer ou o processo mudou. Atualize os dados e revise o encaminhamento.")
+        return analysis
+
+    async def save_strategy(self, request: StrategyRequest) -> StrategyResponse:
+        async with self.connect() as db:
+            await db.execute("BEGIN IMMEDIATE")
+            analysis = await self._current_analysis(db, request.case_id, request.analysis_id, request.expected_case_version)
+            policy = analysis.policy
+            above = policy and policy.settlement_pricing and request.action == "ACORDO" and request.settlement_amount > policy.settlement_pricing.ceiling
+            if policy and (request.action != policy.recommendation or above) and not request.rationale:
+                raise HTTPException(422, "Justifique o encaminhamento que diverge da recomendação ou supera o teto.")
+            strategy = StrategyResponse(strategy_id=uuid4(), case_id=request.case_id, case_version=request.expected_case_version,
+                analysis_id=request.analysis_id, action=request.action, settlement_amount=request.settlement_amount,
+                rationale=request.rationale, created_at=now())
+            await db.execute("INSERT INTO strategies VALUES (?,?,?,?)", (str(strategy.strategy_id), strategy.case_id,
+                strategy.created_at.isoformat(), strategy.model_dump_json()))
+            await db.commit()
+        return strategy
+
+    async def _validate_strategy(self, db, case_id, strategy_id, expected_version):
+        row = await (await db.execute("SELECT payload FROM strategies WHERE case_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (case_id,))).fetchone()
+        strategy = StrategyResponse.model_validate_json(row[0]) if row else None
+        if not strategy or strategy.strategy_id != strategy_id or strategy.case_version != expected_version:
+            raise HTTPException(409, "O encaminhamento mudou. Atualize os dados antes de preparar ou concluir a peça.")
+        analysis = await self._current_analysis(db, case_id, strategy.analysis_id, expected_version)
+        return strategy, analysis
+
+    async def strategy_context(self, case: CaseDetail, strategy_id):
+        async with self.connect() as db:
+            await db.execute("BEGIN")
+            return await self._validate_strategy(db, case.id, strategy_id, case.version)
 
     async def list_sessions(self, case_id: int, *, limit: int, offset: int) -> ChatSessionListResponse:
         async with self.connect() as db:
@@ -166,6 +241,11 @@ class Store:
 
     async def save_draft(self, draft: DraftResponse):
         async with self.connect() as db:
+            await db.execute("BEGIN IMMEDIATE")
+            if draft.strategy:
+                await self._validate_strategy(db, draft.case_id, draft.strategy.strategy_id, draft.case_version)
+            elif draft.analysis_id:
+                await self._current_analysis(db, draft.case_id, draft.analysis_id, draft.case_version)
             await db.execute("INSERT INTO drafts VALUES (?,?,?)", (str(draft.draft_id), draft.case_id, draft.model_dump_json()))
             await db.commit()
 
@@ -199,6 +279,15 @@ class Store:
                 raise HTTPException(404, "Caso não encontrado.")
             if row["version"] != request.expected_case_version or row["status"] == "CONCLUIDO":
                 raise HTTPException(409, "Caso já concluído ou alterado. Recarregue antes de registrar.")
+            if request.draft_id:
+                draft_row = await (await db.execute("SELECT payload FROM drafts WHERE id=? AND case_id=?", (str(request.draft_id), request.case_id))).fetchone()
+                draft = DraftResponse.model_validate_json(draft_row[0]) if draft_row else None
+                if not draft or not draft.strategy:
+                    raise HTTPException(422, "Selecione uma minuta vinculada ao encaminhamento deste processo.")
+                strategy, _ = await self._validate_strategy(db, request.case_id, draft.strategy.strategy_id, row["version"])
+                if (request.analysis_id != strategy.analysis_id or request.action != strategy.action
+                        or request.settlement_amount != strategy.settlement_amount or request.override_reason != strategy.rationale):
+                    raise HTTPException(409, "A decisão deve corresponder ao encaminhamento da minuta revisada.")
             if request.analysis_id:
                 analysis_row = await (await db.execute("SELECT payload FROM analyses WHERE id=? AND case_id=?", (str(request.analysis_id), request.case_id))).fetchone()
                 if analysis_row is None:
@@ -236,6 +325,13 @@ class Store:
                  "analysis": json.loads(r["analysis_payload"]) if r["analysis_payload"] else None} for r in rows]
         return DecisionListResponse(items=items, total=total, limit=limit, offset=offset,
             has_more=offset + len(items) < total)
+
+    async def demo_lawyer_adherence(self) -> list[dict]:
+        async with self.connect() as db:
+            rows = await (await db.execute(
+                "SELECT name, decisions, adherence, law_firm FROM demo_lawyer_adherence ORDER BY adherence DESC, name"
+            )).fetchall()
+        return [dict(row) for row in rows]
 
     async def counts(self) -> dict:
         async with self.connect() as db:

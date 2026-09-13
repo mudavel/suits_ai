@@ -1,11 +1,12 @@
 import json
 import re
 import unicodedata
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import HTTPException
 from openai import AsyncOpenAI, OpenAIError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError, create_model
 
 from src.backend.config import Settings
 from src.backend.database.store import Store, now
@@ -139,6 +140,26 @@ class ScenarioText(BaseModel):
     defense_arguments: list[GroundedText]
 
 
+class AssessmentText(GroundedText):
+    author_arguments: list[GroundedText]
+    defense_arguments: list[GroundedText]
+
+
+def grounded_schema(schema: type[BaseModel], sources: list[SourceReference]) -> type[BaseModel]:
+    """Constrain citations at generation time, including each side's arguments."""
+    ids = tuple(dict.fromkeys(source.source_id for source in sources))
+    source_id_type = Literal[ids] if ids else str
+    citation_field = (list[source_id_type], Field(
+        description="Use only exact source_id values from sources that support this text.",
+        **({} if ids else {"max_length": 0}),
+    ))
+    fields = {"source_ids": citation_field} if "source_ids" in schema.model_fields else {}
+    if "author_arguments" in schema.model_fields:
+        argument_schema = create_model("GroundedArgument", __base__=GroundedText, source_ids=citation_field)
+        fields.update(author_arguments=(list[argument_schema], ...), defense_arguments=(list[argument_schema], ...))
+    return create_model(f"{schema.__name__}WithSources", __base__=schema, **fields)
+
+
 def normalize(text: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFKD", text.lower()) if not unicodedata.combining(c))
 
@@ -191,7 +212,7 @@ class Copilot:
         messages.append({"role": "user", "content": json.dumps(payload, ensure_ascii=False)})
         try:
             response = await self.client.responses.parse(
-                model=self.settings.openai_model, input=messages, text_format=schema,
+                model=self.settings.openai_model, input=messages, text_format=grounded_schema(schema, sources),
                 reasoning={"effort": self.settings.openai_reasoning_effort},
                 max_output_tokens=self.settings.openai_max_output_tokens, store=False,
             )
@@ -249,17 +270,30 @@ class Copilot:
             generation_mode=self.settings.ai_mode)
 
     async def draft(self, case: CaseDetail, request: DraftRequest) -> DraftResponse:
+        strategy = None
+        if request.strategy_id:
+            strategy, analysis = await self.store.strategy_context(case, request.strategy_id)
+            if request.action != strategy.action or request.settlement_amount != strategy.settlement_amount:
+                raise HTTPException(422, "O tipo e o valor da minuta devem corresponder ao encaminhamento salvo.")
+        else:
+            analysis = await self.store.latest_analysis(case.id)
+            if analysis and analysis.case_version != case.version:
+                raise HTTPException(409, "O parecer ou o processo mudou. Atualize os dados e revise o encaminhamento.")
         doc_type = "CONTESTACAO" if request.action == "DEFESA" else "MENSAGEM_ACORDO" if request.format == "whatsapp" else "TERMO_ACORDO"
         title = {"CONTESTACAO": "Minuta de contestação", "TERMO_ACORDO": "Minuta de termo de acordo", "MENSAGEM_ACORDO": "Proposta de acordo para mensagem"}[doc_type]
         sources = self.context(case, "contrato crédito titularidade autoria documentação parecer", limit=10)
+        if analysis:
+            analysis_sources = analysis.sources + [source for argument in analysis.author_arguments + analysis.defense_arguments for source in argument.sources]
+            sources = list({source.source_id: source for source in sources + analysis_sources}.values())
         base = (f"# {title}\n\n**MINUTA PARA REVISÃO - SEM ASSINATURA OU ACEITE**\n\n"
                 f"Processo: {case.case_number}\n\nÓrgão: {case.court or '[preencher]'}\n\n"
                 f"Parte autora: {case.claimant_name or '[preencher]'}\n\n"
                 f"Parte ré: {case.defendant_name or '[preencher]'}\n\n")
         if request.action == "DEFESA":
+            points = [argument.text for argument in analysis.defense_arguments] if analysis and analysis.defense_arguments else [check.message for check in case.checks]
             body = ("## 1. Síntese da controvérsia\n\n" + "\n\n".join(case.claims) +
                     "\n\n## 2. Elementos documentais a examinar\n\n" +
-                    "\n\n".join(f"- {check.message}" for check in case.checks) +
+                    "\n\n".join(f"- {point}" for point in dict.fromkeys(points)) +
                     "\n\n## 3. Manifestação e pedidos\n\n[Advogado: formular as teses, impugnações específicas e pedidos após revisar os elementos acima. Não afirmar autenticidade apenas pela presença de documentos.]\n\n"
                     "## 4. Representação\n\n[Nome do advogado do banco, OAB e data a preencher após revisão.]\n")
         elif request.format == "whatsapp":
@@ -273,21 +307,18 @@ class Copilot:
                     "## 3. Condições pendentes\n\n[Definir prazo, meio de pagamento, dados conferidos do favorecido, custas, honorários e providências processuais.]\n\n"
                     "## 4. Alcance e formalização\n\n[Delimitar obrigações e alcance da quitação, quando aplicável, após revisão e concordância expressa.]\n\n"
                     "## 5. Assinaturas\n\n[Partes e representantes habilitados. Nenhuma assinatura ou anuência foi registrada nesta minuta.]\n")
-        latest = await self.store.latest_analysis(case.id)
-        current_policy = latest.policy if latest and latest.case_version == case.version else None
-        extra_payload = {"request": request.model_dump(), "base_draft": body}
-        if current_policy:
-            extra_payload["policy"] = current_policy.model_dump()
-
         if self.settings.ai_mode == "openai":
-            prompt = (
-                "Elabore o corpo da minuta solicitada em Markdown. Integre as provas documentais dos autos e as "
-                "diretrizes da política em extra.policy (incluindo o caminho de decisão e regras aplicadas, se houver) "
-                "para fundamentar a tese jurídica de forma consistente. Preserve pendências e marque pontos que exigem revisão. "
-                "Use o valor informado, sem criar condições não fornecidas."
-            )
-            generated = await self.generate(GroundedText, prompt,
-                case, sources, extra=extra_payload)
+            generated = await self.generate(GroundedText,
+                "Elabore a peça correspondente ao encaminhamento do advogado, usando o parecer salvo e o confronto de argumentos como contexto. "
+                "O parecer é avaliação interna, não prova: confira os fatos nas fontes. Responda às alegações relevantes e preserve as pendências. "
+                "Considere também o caminho da decisão, os fatores recorrentes e as regras da política fornecida para manter a fundamentação consistente. "
+                "Redija para o destinatário da peça, sem copiar o parecer nem expor notas internas. "
+                "A justificativa do encaminhamento é uma orientação do advogado, não comprovação de fatos ou aprovação de alçada. "
+                "Use o valor informado, sem inventar condições. Não substitua a escolha do advogado pela recomendação da política. Entregue Markdown para revisão.",
+                case, sources, extra={"request": request.model_dump(mode="json"), "base_draft": body,
+                    "analysis": analysis.model_dump(mode="json") if analysis else None,
+                    "policy": analysis.policy.model_dump() if analysis and analysis.policy else None,
+                    "strategy": strategy.model_dump(mode="json") if strategy else None})
             body, sources = generated.text, self.cited(generated.source_ids, sources)
         cited_pages = dict.fromkeys((source.document_name, source.page) for source in sources)
         bibliography = "\n\n## Documentos de referência\n\n" + "\n".join(
@@ -295,6 +326,7 @@ class Copilot:
         draft = DraftResponse(draft_id=uuid4(), case_id=case.id, document_type=doc_type,
             title=title, content_markdown=base+body+bibliography,
             attached_subsidies=[d.id for d in case.documents if d.category == "SUBSIDIO"],
-            sources=sources, generation_mode=self.settings.ai_mode, created_at=now())
+            sources=sources, generation_mode=self.settings.ai_mode, created_at=now(),
+            analysis_id=analysis.analysis_id if analysis else None, case_version=case.version, strategy=strategy)
         await self.store.save_draft(draft)
         return draft

@@ -41,6 +41,15 @@ const fieldNames = {
 
 const errors = new Map([
   ...systemMessages,
+  ...[
+    'O parecer ou o processo mudou. Atualize os dados e revise o encaminhamento.',
+    'Justifique o encaminhamento que diverge da recomendação ou supera o teto.',
+    'O tipo e o valor da minuta devem corresponder ao encaminhamento salvo.',
+    'Selecione uma minuta vinculada ao encaminhamento deste processo.',
+    'A decisão deve corresponder ao encaminhamento da minuta revisada.',
+    'Informe a minuta e seu texto revisado em conjunto.',
+  ].map(message => [message, message]),
+  ['O encaminhamento mudou. Atualize os dados antes de preparar ou concluir a peça.', 'O encaminhamento mudou. Atualize os dados antes de preparar a minuta ou concluir a análise.'],
   ['Chave de idempotência já usada com outros dados.', 'Esta tentativa de registro já foi utilizada com outros dados. Atualize o processo e revise a decisão.'],
   ['Informe override_reason para divergir da política ou exceder o teto.', 'Informe uma justificativa para divergir da recomendação ou ultrapassar a alçada.'],
   ['Informe settlement_amount positivo para acordo.', 'Informe um valor de acordo maior que zero.'],

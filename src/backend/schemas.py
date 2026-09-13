@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, model_validator
 
 Action = Literal["DEFESA", "ACORDO"]
 CaseStatus = Literal["PENDENTE", "EM_ANALISE", "CONCLUIDO"]
@@ -82,6 +82,11 @@ class DocumentCheck(BaseModel):
     sources: list[SourceReference]
 
 
+class ScenarioArgument(BaseModel):
+    text: str
+    sources: list[SourceReference]
+
+
 class DocumentPage(BaseModel):
     number: int
     text: str
@@ -143,8 +148,8 @@ class PolicyResult(BaseModel):
     confidence_score_semantics: Literal[
         "loss_probability", "recommendation_confidence", "unspecified"
     ] = Field(default="unspecified", description=(
-        "Significado declarado pelo produtor. Ausência no resultado da B1 ou "
-        "em análises antigas permanece unspecified; não inferir a partir da ação."
+        "Significado declarado pelo produtor. Pareceres históricos reconhecidos da B1 "
+        "usam o significado da regra registrada; outros resultados permanecem unspecified."
     ))
     risk_level: RiskLevel
     settlement_pricing: SettlementPricing | None = None
@@ -171,6 +176,30 @@ class AnalyzeResponse(BaseModel):
     generation_mode: Literal["local", "openai", "mock"] = "mock"
     sources: list[SourceReference] = Field(default_factory=list)
     document_checks: list[DocumentCheck] = Field(default_factory=list)
+    author_arguments: list[ScenarioArgument] = Field(default_factory=list)
+    defense_arguments: list[ScenarioArgument] = Field(default_factory=list)
+    created_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def describe_legacy_policy_score(self):
+        policy = self.policy
+        if self.policy_status != "available" or not policy or policy.confidence_score_semantics != "unspecified":
+            return self
+        # Recognize the persisted B1 rule, rather than interpreting every ACORDO
+        # as a loss probability. Keep unknown producers and explicit values intact.
+        prefixes = {
+            "CADEIA_COMPLETA": "Força Probatória Plena:",
+            "DOSSIE_NAO_CONFORME": "Auditoria Probatória: Dossiê Grafotécnico/Facial",
+            "FALHA_PROBATORIA": "Falha Probatória Severa:",
+            "ML_ZONA_CINZENTA": "Zona Cinzenta Probatória:",
+        }
+        prefix = prefixes.get(policy.reasoning_code)
+        if not prefix or not any(rule.startswith(prefix) for rule in policy.applied_rules):
+            return self
+        semantics = "loss_probability" if policy.reasoning_code == "ML_ZONA_CINZENTA" and policy.recommendation == "ACORDO" else "recommendation_confidence"
+        self.policy = policy.model_copy(update={"confidence_score_semantics": semantics})
+        self.warnings = [warning for warning in self.warnings if warning != "B1 não declara a semântica de confidence_score; não apresentar como probabilidade de derrota."]
+        return self
 
 
 class StoredAnalysisResponse(BaseModel):
@@ -181,6 +210,18 @@ class StoredAnalysisResponse(BaseModel):
         "Último parecer persistido, sem executar IA. stale indica versão diferente "
         "do caso; o parecer é histórico e não deve definir a alçada atual."
     ))
+
+
+class LawyerAdherenceRow(BaseModel):
+    name: str
+    law_firm: str | None = None
+    decisions: int = Field(ge=0)
+    adherence: Probability
+
+
+class LawyerAdherenceResponse(BaseModel):
+    items: list[LawyerAdherenceRow]
+    is_simulated: Literal[True] = True
 
 
 class MonitoringOverviewResponse(BaseModel):
@@ -246,11 +287,6 @@ class ChatSessionListResponse(OffsetPage):
     items: list[ChatSessionSummary]
 
 
-class ScenarioArgument(BaseModel):
-    text: str
-    sources: list[SourceReference]
-
-
 class ScenariosResponse(BaseModel):
     case_id: int
     author_arguments: list[ScenarioArgument]
@@ -260,11 +296,47 @@ class ScenariosResponse(BaseModel):
     generation_mode: Literal["local", "openai"]
 
 
+class StrategyRequest(RequestModel):
+    case_id: int = Field(gt=0)
+    analysis_id: UUID
+    expected_case_version: int = Field(ge=0)
+    action: Action
+    settlement_amount: Money | None = None
+    rationale: str | None = Field(default=None, min_length=5, max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_amount(self):
+        if self.action == "ACORDO":
+            if self.settlement_amount is None or self.settlement_amount <= 0:
+                raise ValueError("Informe settlement_amount positivo para acordo.")
+            validate_cents(self.settlement_amount)
+        elif self.settlement_amount is not None:
+            raise ValueError("Defesa não aceita settlement_amount.")
+        return self
+
+
+class StrategyResponse(BaseModel):
+    strategy_id: UUID
+    case_id: int
+    case_version: int
+    analysis_id: UUID
+    action: Action
+    settlement_amount: Money | None
+    rationale: str | None
+    created_at: datetime
+
+
+class StoredStrategyResponse(BaseModel):
+    status: Literal["available", "stale", "not_found"]
+    strategy: StrategyResponse | None
+
+
 class DraftRequest(RequestModel):
     case_id: int = Field(gt=0)
     action: Action
     settlement_amount: Money | None = None
     format: Literal["formal", "whatsapp"] = "formal"
+    strategy_id: UUID | None = None
 
     @model_validator(mode="after")
     def validate_action(self):
@@ -288,6 +360,9 @@ class DraftResponse(BaseModel):
     sources: list[SourceReference]
     generation_mode: Literal["local", "openai"]
     created_at: datetime
+    analysis_id: UUID | None = None
+    case_version: int | None = None
+    strategy: StrategyResponse | None = None
 
 
 class DraftSummary(BaseModel):
@@ -298,6 +373,8 @@ class DraftSummary(BaseModel):
     title: str
     generation_mode: Literal["local", "openai"]
     created_at: datetime
+    analysis_id: UUID | None = None
+    strategy: StrategyResponse | None = None
 
 
 class DraftListResponse(OffsetPage):
@@ -340,9 +417,15 @@ class DecisionRequest(RequestModel):
     analysis_id: UUID | None = None
     override_reason: str | None = Field(default=None, min_length=5, max_length=2000)
     idempotency_key: UUID = Field(default_factory=uuid4)
+    draft_id: UUID | None = None
+    reviewed_content_markdown: Annotated[str, StringConstraints(strip_whitespace=False)] | None = Field(default=None, min_length=1, max_length=60000)
 
     @model_validator(mode="after")
     def validate_amount(self):
+        if bool(self.draft_id) != bool(self.reviewed_content_markdown):
+            raise ValueError("Informe a minuta e seu texto revisado em conjunto.")
+        if self.reviewed_content_markdown is not None and not self.reviewed_content_markdown.strip():
+            raise ValueError("O texto revisado não pode estar vazio.")
         if self.action == "ACORDO":
             if self.settlement_amount is None or self.settlement_amount <= 0:
                 raise ValueError("Informe settlement_amount positivo para acordo.")

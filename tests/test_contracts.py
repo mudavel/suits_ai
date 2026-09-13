@@ -165,8 +165,10 @@ def test_remote_b1_accepts_document_cases_and_backend_preserves_its_results(remo
             assert body["analysis_id"]
             assert body["policy"]["reasoning_code"] == code
             assert body["policy"]["confidence_score"] == score
-            assert body["policy"]["confidence_score_semantics"] == "unspecified"
-            assert body["warnings"]
+            assert body["policy"]["confidence_score_semantics"] == "recommendation_confidence"
+            assert body["explanation"] == body["policy"]["plain_language_explanation"]
+            assert body["policy"]["decision_path"]
+            assert not any("semântica" in warning for warning in body["warnings"])
             normalized, raw = captured[-1]
             assert normalized.valor_causa == cause_value
             for key, value in raw.items():
@@ -196,7 +198,7 @@ def test_remote_b1_grey_zone_builds_its_own_features(remote_engine, monkeypatch,
     result = PolicyResult.model_validate(remote_engine.evaluate_case(payload).model_dump())
     assert result.recommendation == action
     assert result.confidence_score == score
-    assert result.confidence_score_semantics == "unspecified"
+    assert result.confidence_score_semantics == ("loss_probability" if action == "ACORDO" else "recommendation_confidence")
 
 
 def test_remote_b1_nonconforming_dossier_and_reason_codes(remote_engine, dossier_case):

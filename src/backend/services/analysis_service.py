@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from src.backend.schemas import AnalyzeResponse, CaseDetail, NegotiationResponse, PolicyResult
-from src.backend.services.copilot import Copilot, GroundedText
+from src.backend.schemas import AnalyzeResponse, CaseDetail, NegotiationResponse, PolicyResult, ScenarioArgument
+from src.backend.services.copilot import Copilot, AssessmentText
 from src.backend.services.mocks import MockAnalysisService
 from src.backend.services.policy_adapter import policy_input
 
@@ -35,36 +35,40 @@ class AnalysisService:
                 raise HTTPException(503, "Motor da branch 1 indisponível ou incompatível com o contrato.") from error
         else:
             warnings.append("Motor da branch 1 ainda não integrado: probabilidade, recomendação e alçada indisponíveis.")
-        sources = self.copilot.context(case, "contrato extrato liveness titularidade parecer crédito", limit=10)
-        if policy and (policy.plain_language_explanation or policy.decision_path):
-            explanation_parts = []
-            if policy.plain_language_explanation:
-                explanation_parts.append(policy.plain_language_explanation)
-            if policy.decision_path:
-                explanation_parts.append("### Trilha da Decisão (Tracing)\n" + "\n".join(f"- {step}" for step in policy.decision_path))
-            if policy.forest_consensus_reasons:
-                explanation_parts.append("### Fatores de Consenso do Modelo\n" + "\n".join(f"- {reason}" for reason in policy.forest_consensus_reasons))
-            explanation = "\n\n".join(explanation_parts)
-        else:
-            explanation = "Revisão documental local. " + " ".join(check.message for check in case.checks)
-
+        sources = self.copilot.context(case, "petição inicial pedidos fatos contrato extrato titularidade crédito descontos", limit=10)
+        explanation = policy.plain_language_explanation if policy and policy.plain_language_explanation else "Revisão documental local. " + " ".join(check.message for check in case.checks)
+        author, defense = [], []
         if self.settings.ai_mode == "openai":
-            prompt = (
-                "Produza um parecer documental detalhado e fundamentado. Utilize a política e o tracing do modelo "
-                "fornecidos em extra.policy (incluindo a recomendação, o decision_path, as applied_rules e os "
-                "forest_consensus_reasons) para sintetizar em texto jurídico fluido por que a recomendação é de acordo "
-                "ou defesa e qual o racional da trilha percorrida pela inteligência. Sem política fornecida, limite-se "
-                "à análise documental e não recomende acordo/defesa nem atribua probabilidade."
-            )
-            generated = await self.copilot.generate(GroundedText, prompt,
+            generated = await self.copilot.generate(AssessmentText,
+                "Produza uma avaliação interna única para orientar o encaminhamento e a futura peça. "
+                "O parecer deve ser um RESUMO TEXTUAL DO PROCESSO, em 3 ou 4 parágrafos corridos, de aproximadamente 180 a 260 palavras, "
+                "sem títulos, listas ou divisão em controvérsias, elementos disponíveis e pendências. "
+                "Apresente primeiro as partes, o objeto da ação, os fatos centrais e os pedidos efetivamente identificados na inicial; "
+                "inclua órgão julgador, valor da causa e condições da operação quando relevantes e disponíveis. "
+                "Depois sintetize a versão da parte autora e o que os documentos do banco registram sobre contratação, crédito e descontos. "
+                "Diferencie alegações, registros documentais e fatos que ainda não puderam ser confirmados. "
+                "Finalize com o ponto central que exige esclarecimento, se houver, sem transformar o parecer numa lista de problemas. "
+                "Não invente pedidos, datas, valores, autenticidade ou fase processual. Não confunda valor da causa com valor contratado. "
+                "Nunca exponha contagens de valores extraídos, comparação textual, campos, indicadores ou procedimentos técnicos. "
+                "Cite de forma breve documento e página junto dos fatos materiais; não repita avisos genéricos. "
+                "Não reproduza a fundamentação da política, probabilidades ou recomendações: elas têm seção própria. "
+                "Nos campos de argumentos, confronte as alegações "
+                "do autor com possíveis respostas documentais do banco, citando as fontes. Não repita essa lista no texto de síntese. Não preveja julgamento.",
                 case, sources, extra={"policy": policy.model_dump() if policy else None})
             explanation = generated.text
-            sources = self.copilot.cited(generated.source_ids, sources)
+            author = [ScenarioArgument(text=argument.text, sources=self.copilot.cited(argument.source_ids, sources)) for argument in generated.author_arguments]
+            defense = [ScenarioArgument(text=argument.text, sources=self.copilot.cited(argument.source_ids, sources)) for argument in generated.defense_arguments]
+            all_ids = generated.source_ids + [source_id for argument in generated.author_arguments + generated.defense_arguments for source_id in argument.source_ids]
+            sources = self.copilot.cited(all_ids, sources)
             warnings.extend(generated.warnings)
+            warnings.extend(warning for argument in generated.author_arguments + generated.defense_arguments for warning in argument.warnings)
+        else:
+            comparison = await self.copilot.scenarios(case)
+            author, defense = comparison.author_arguments, comparison.defense_arguments
         result = AnalyzeResponse(case_id=case.id, case_version=case.version, policy=policy,
-            policy_status=policy_status, explanation=explanation, warnings=warnings,
+            policy_status=policy_status, explanation=explanation, warnings=list(dict.fromkeys(warnings)),
             data_mode=case.data_mode, generation_mode=self.settings.ai_mode,
-            sources=sources, document_checks=case.checks)
+            sources=sources, document_checks=case.checks, author_arguments=author, defense_arguments=defense)
         return await self.store.save_analysis(result)
 
     async def negotiate(self, case: CaseDetail, proposed_amount: float) -> NegotiationResponse:

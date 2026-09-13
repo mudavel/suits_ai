@@ -1,0 +1,15 @@
+{
+  "total_cases": 60000,
+  "missing_by_type": {
+    "has_contract": 17017,
+    "has_statement": 11105,
+    "has_credit_receipt": 23586,
+    "has_dossier": 18014,
+    "has_debt_evolution": 13785,
+    "has_referenced_report": 11941
+  },
+  "source": "Hackaton_Enter_Base_Candidatos.xlsx",
+  "sheet": "Subsídios disponibilizados",
+  "range": "A2:G60002",
+  "method": "Contagem de valores 0 (subsídio não fornecido), por processo único; 1 indica fornecido."
+}

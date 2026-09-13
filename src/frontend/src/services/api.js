@@ -38,6 +38,7 @@ async function request(path, { body, signal, timeoutMs = READ_TIMEOUT, binary = 
 }
 
 export const requestJson = (path, options) => request(path, options)
+export const fetchHistoricalCases = (filters, options) => requestJson('/api/monitoring/historical' + query(filters), { timeoutMs: 60000, ...options })
 const post = (path, body, options) => requestJson(path, { timeoutMs: GENERATION_TIMEOUT, ...options, body })
 const casePath = id => {
   if (!/^[1-9]\d*$/.test(String(id))) throw new Error('Caso não encontrado.')
@@ -74,7 +75,13 @@ export async function fetchCases({ page, pageSize, status, uf, signal, includeAn
     for (let start = 0; start < data.length; start += 6) {
       if (signal?.aborted) throw new DOMException('Consulta cancelada', 'AbortError')
       await Promise.all(data.slice(start, start + 6).map(async (item, index) => {
-        try { data[start + index] = applyStoredAnalysis(item, await fetchAnalysis(item.id, { signal })) }
+        try {
+          const analyzed = applyStoredAnalysis(item, await fetchAnalysis(item.id, { signal }))
+          if (item.status === 'CONCLUIDO') {
+            const records = await fetchDecisions(item.id, 0, { signal })
+            data[start + index] = { ...analyzed, recommendation: records.items[0]?.decision.action ?? null, definitionSource: 'decision' }
+          } else data[start + index] = analyzed
+        }
         catch (error) {
           if (error.name === 'AbortError') throw error
           data[start + index] = { ...item, recommendation: null, riskLevel: null, analysisError: true }
@@ -90,6 +97,8 @@ export async function fetchCaseById(id, options) {
 }
 export const fetchAnalysis = (id, options) => requestJson(`${casePath(id)}/analysis`, options)
 export const analyzeCase = id => post('/api/analyze', { case_id: Number(id) })
+export const fetchStrategy = (id, options) => requestJson(casePath(id) + '/strategy', options)
+export const saveStrategy = values => post('/api/strategy', values)
 export const generateScenarios = id => post('/api/scenarios', { case_id: Number(id) })
 export const fetchDocument = (id, documentId, options) => requestJson(`${casePath(id)}/documents/${idPath(documentId)}`, options)
 export const fetchChats = (id, offset = 0, options) => requestJson(`${casePath(id)}/chats${query({ limit: 20, offset })}`, options)

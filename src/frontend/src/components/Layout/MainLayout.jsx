@@ -26,7 +26,7 @@ export default function MainLayout() {
   const handleProfileSwitch = (role) => {
     switchProfile(role)
     setProfileDropdownOpen(false)
-    if (role === 'LAWYER' && (location.pathname === '/monitoramento' || location.pathname === '/simulacao')) navigate('/triagem')
+    if (role === 'LAWYER' && ['/monitoramento', '/base-historica'].includes(location.pathname)) navigate('/triagem')
   }
 
   return (
@@ -35,20 +35,15 @@ export default function MainLayout() {
       <header className="app-header">
         <Link to="/triagem" className="brand-link" aria-label="Enter OS — início"><Brand compact /></Link>
         <nav className="main-nav" aria-label="Navegação principal">
-          <NavLink to="/triagem" className={({ isActive }) => isActive || location.pathname === '/cases' ? 'nav-item active' : 'nav-item'}>Processos</NavLink>
-          {currentProfile.id === 'LAWYER' && location.pathname.startsWith('/workspace/') && <NavLink to={location.pathname} className="nav-item active">Análise do processo</NavLink>}
-          {(currentProfile.id === 'BANK' || currentProfile.id === 'FDE') && (
-            <>
-              <NavLink to="/monitoramento" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Governança</NavLink>
-              <NavLink to="/simulacao" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Simulação 60k (FDE)</NavLink>
-            </>
-          )}
+          <NavLink to="/triagem" className={({ isActive }) => isActive || location.pathname === '/cases' || location.pathname.startsWith('/workspace') ? 'nav-item active' : 'nav-item'}>Processos</NavLink>
+          {currentProfile.id === 'BANK' && <NavLink to="/monitoramento" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Governança</NavLink>}
+          {currentProfile.id === 'BANK' && <NavLink to="/base-historica" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Base histórica</NavLink>}
         </nav>
         <div className="header-actions">
           <span className="demo-label"><span className="status-dot" /> Demonstração</span>
           <div className="profile-control" ref={profileRef}>
-            <button type="button" className="profile-trigger" aria-label={'Perfil: ' + currentProfile.name} aria-expanded={profileDropdownOpen} aria-controls="profile-options" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
-              <span className="avatar">{currentProfile.avatar}</span><span className="profile-trigger-name">{currentProfile.name}</span><ChevronDown size={14} />
+            <button type="button" className="profile-trigger" aria-label={'Perfil: ' + currentProfile.badge + ' — ' + currentProfile.name} aria-expanded={profileDropdownOpen} aria-controls="profile-options" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
+              <span className="avatar">{currentProfile.avatar}</span><span className="profile-trigger-name"><span className="block">{currentProfile.name}</span><span className="block text-[10px] text-muted">{currentProfile.badge}</span></span><ChevronDown size={14} />
             </button>
             {profileDropdownOpen && <div className="profile-menu" id="profile-options">
               <div className="profile-menu-heading"><strong>{currentProfile.name}</strong><span>{currentProfile.organization}</span></div>

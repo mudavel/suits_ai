@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
-import { analyzeCase, exportDraft, fetchAnalysis, fetchCaseById, fetchCases, fetchChat, fetchChats, fetchDecisions, fetchDocument, fetchDraft, fetchDrafts, generateDraft, generateScenarios, negotiate, recordDecision, requestJson, sendChat } from '../src/services/api.js'
+import { analyzeCase, exportDraft, fetchAnalysis, fetchCaseById, fetchCases, fetchChat, fetchChats, fetchDecisions, fetchDocument, fetchDraft, fetchDrafts, fetchStrategy, generateDraft, generateScenarios, negotiate, recordDecision, requestJson, sendChat } from '../src/services/api.js'
+import { prepareDraft } from '../src/services/draftWorkflow.js'
 
 const base = process.env.SUITS_TEST_API_URL
 if (!base || !/^http:\/\/127\.0\.0\.1:\d+$/.test(base) || process.env.SUITS_ISOLATED_TEST !== '1') {
@@ -14,7 +15,7 @@ globalThis.fetch = (path, options) => {
 }
 
 test('cliente do frontend com FastAPI, SQLite temporário e geração local', async t => {
-  let analysis, chat, draft
+  let analysis, chat, draft, strategy
   await t.test('lista, paginação, filtros e documentos reais do dataset', async () => {
     const first = await fetchCases({ page: 1, pageSize: 1 })
     const second = await fetchCases({ page: 2, pageSize: 1 })
@@ -40,6 +41,8 @@ test('cliente do frontend com FastAPI, SQLite temporário e geração local', as
     const stored = await fetchAnalysis(1)
     assert.equal(stored.status, 'available')
     assert.equal(stored.analysis.analysis_id, analysis.analysis_id)
+    assert.ok(stored.analysis.author_arguments.length)
+    assert.ok(stored.analysis.defense_arguments.length)
     const triage = await fetchCases({ includeAnalysis: true })
     assert.equal(triage.data.find(item => item.id === 1).analysisStatus, 'available')
     assert.equal(triage.data.find(item => item.id === 1).recommendation, null)
@@ -60,8 +63,13 @@ test('cliente do frontend com FastAPI, SQLite temporário e geração local', as
     assert.equal(history.messages.at(-1).content, second.answer)
     await assert.rejects(fetchChat(2, chat.session_id), error => error.status === 404)
   })
-  await t.test('minuta editada exporta PDF sem alterar original persistido', async () => {
-    draft = await generateDraft(1, { action: 'DEFESA', format: 'formal' })
+  await t.test('encaminhamento salvo liga o parecer à minuta e ao PDF revisado', async () => {
+    assert.equal((await fetchStrategy(1)).status, 'not_found')
+    draft = await prepareDraft({ request: { case_id: 1, analysis_id: analysis.analysis_id, expected_case_version: 0,
+      action: 'DEFESA', settlement_amount: null, rationale: 'Desenvolver as respostas com as fontes conferidas.' } })
+    strategy = (await fetchStrategy(1)).strategy
+    assert.equal(draft.analysis_id, analysis.analysis_id)
+    assert.deepEqual(draft.strategy, strategy)
     assert.equal(draft.status, 'review_required')
     assert.equal((await fetchDrafts(1)).items[0].draft_id, draft.draft_id)
     const saved = await fetchDraft(draft.draft_id)
@@ -91,7 +99,7 @@ test('cliente do frontend com FastAPI, SQLite temporário e geração local', as
     assert.ok(!first.items.some(item => item.draft_id === second.items[0].draft_id))
   })
   await t.test('decisão mantém versão e idempotência, rejeita concorrência e torna parecer histórico', async () => {
-    const body = { case_id: 1, action: 'DEFESA', settlement_amount: null, lawyer_id: 'qa-adv', law_firm_id: 'qa-firm', expected_case_version: 0, analysis_id: analysis.analysis_id, override_reason: null, idempotency_key: crypto.randomUUID() }
+    const body = { case_id: 1, action: 'DEFESA', settlement_amount: null, lawyer_id: 'qa-adv', law_firm_id: 'qa-firm', expected_case_version: 0, analysis_id: analysis.analysis_id, override_reason: strategy.rationale, draft_id: draft.draft_id, reviewed_content_markdown: '# Revisao de integracao\n\nMARCADOR QA FRONTEND 2026', idempotency_key: crypto.randomUUID() }
     const result = await recordDecision(body)
     assert.equal(result.case_version, 1)
     assert.equal(result.is_override, null)
@@ -101,8 +109,12 @@ test('cliente do frontend com FastAPI, SQLite temporário e geração local', as
     assert.equal((await fetchAnalysis(1)).status, 'stale')
     assert.equal((await fetchDecisions(1)).total, 1)
     assert.equal((await fetchCases({ status: 'CONCLUIDO' })).total, 1)
+    assert.equal((await fetchCases({ status: 'CONCLUIDO', includeAnalysis: true })).data[0].recommendation, 'DEFESA')
     const record = (await fetchDecisions(1)).items[0]
     assert.equal(record.analysis.analysis_id, analysis.analysis_id)
+    assert.equal(record.registration.reviewed_content_markdown, body.reviewed_content_markdown)
+    assert.equal(record.registration.draft_id, draft.draft_id)
+    assert.equal((await fetchStrategy(1)).status, 'stale')
   })
   await t.test('governança reflete decisões e inventário sem inventar indicadores', async () => {
     const overview = await requestJson('/api/monitoring/overview')

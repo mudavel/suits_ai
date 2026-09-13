@@ -6,6 +6,13 @@ export function currentAnalysis(envelope, caseData) {
   const analysis = envelope?.analysis
   return envelope?.status === 'available' && analysis?.case_id === caseData.id && analysis.case_version === caseData.version ? analysis : null
 }
+export function currentStrategy(envelope, caseData, analysis) {
+  const strategy = envelope?.strategy
+  return envelope?.status === 'available' && caseData.status !== 'CONCLUIDO' && strategy?.case_id === caseData.id && strategy.case_version === caseData.version && analysis && strategy.analysis_id === analysis.analysis_id ? strategy : null
+}
+export function draftMatchesStrategy(draft, strategy) {
+  return Boolean(draft && strategy && draft.case_id === strategy.case_id && draft.case_version === strategy.case_version && draft.analysis_id === strategy.analysis_id && draft.strategy?.strategy_id === strategy.strategy_id)
+}
 export function applyStoredAnalysis(caseData, envelope) {
   const analysis = currentAnalysis(envelope, { ...caseData, version: caseData.version ?? envelope.case_version })
   const policy = analysis?.policy
@@ -17,7 +24,8 @@ export function applyStoredAnalysis(caseData, envelope) {
 }
 export function policyScore(policy) {
   if (!policy || policy.confidence_score == null) return null
-  const label = { loss_probability: 'Probabilidade de derrota', recommendation_confidence: 'Confiança na recomendação', unspecified: 'Índice informado (interpretação não definida)' }[policy.confidence_score_semantics] || 'Índice informado (interpretação não definida)'
+  const label = { loss_probability: 'Probabilidade estimada de derrota', recommendation_confidence: 'Confiança na recomendação' }[policy.confidence_score_semantics]
+  if (!label) return null
   return { label, value: policy.confidence_score }
 }
 export function parseAmount(input) {

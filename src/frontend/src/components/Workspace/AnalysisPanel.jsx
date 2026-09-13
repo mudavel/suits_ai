@@ -1,45 +1,56 @@
 import MarkdownContent from '../MarkdownContent'
-import { riskLabel, reasonLabel, policyRule } from '../../services/productLanguage'
+import { riskLabel, reasonLabel } from '../../services/productLanguage'
 import { useAction } from '../../hooks/useRemote'
 import { analyzeCase } from '../../services/api'
-import { currentAnalysis, money, policyScore } from '../../services/workflow'
-import { Busy, ErrorNotice, Mode, Sources, Warnings } from './Shared'
+import { currentAnalysis, dateTime, money, policyScore } from '../../services/workflow'
+import { Busy, ErrorNotice, Mode, Sources } from './Shared'
+import { compactPolicyExplanation } from '../../services/policyExplanation'
+import { caseAssessment } from '../../services/caseAssessment'
 
-export default function AnalysisPanel({ caseData, envelope, refresh, disabled }) {
+function ConciseAssessment({ caseData, analysis, current }) {
+  const assessment = caseAssessment(caseData, analysis, current)
+  return <div className="analysis-reading-width case-assessment">
+    {assessment.generated && <Mode value={analysis.generation_mode} />}
+    <MarkdownContent>{assessment.text}</MarkdownContent>
+  </div>
+}
+
+function PolicyGuide({ analysis, historical }) {
+  const explanation = compactPolicyExplanation(analysis)
+  if (!explanation) return null
+  return <details className="sources policy-guide"><summary>Como a política chega à definição</summary><div className="policy-rationale space-y-5 mt-4">
+    <h3>{historical ? 'Recomendação registrada' : 'Recomendação'}: {explanation.recommendation}</h3>
+    {historical && <p className="notice">Esta fundamentação pertence ao parecer anterior e não orienta uma nova decisão sem atualização da análise.</p>}
+    {explanation.paragraphs.map((text, i) => <p key={i}>{text}</p>)}
+    <p className="text-xs text-muted">{explanation.note}</p>
+    {analysis.created_at && <p className="text-xs text-muted">Avaliação de {dateTime(analysis.created_at)}</p>}
+  </div></details>
+}
+
+export default function AnalysisPanel({ caseData, envelope, refresh, disabled, onNavigate }) {
   const operation = useAction()
   const analysis = envelope.analysis
   const current = currentAnalysis(envelope, caseData)
   const policy = current?.policy
+  const recordedPolicy = analysis?.policy
   const score = policyScore(policy)
-  return <section className="panel space-y-5">
-    <div className="section-heading"><div><p className="eyebrow">PARECER E ESTRATÉGIA</p><h2>Análise do caso</h2></div><button type="button" className="button-primary" disabled={disabled || operation.pending || caseData.status === 'CONCLUIDO'} onClick={() => operation.run(() => analyzeCase(caseData.id), refresh)}>{analysis ? 'Atualizar análise' : 'Analisar caso'}</button></div>
+  const closed = caseData.status === 'CONCLUIDO'
+  const generate = () => operation.run(() => analyzeCase(caseData.id), refresh)
+  const busy = disabled || operation.pending
+  return <section className="panel space-y-6">
+    <div className="section-heading"><div><p className="eyebrow">ETAPA 1</p><h2>Parecer do caso</h2><p className="text-xs text-muted mt-2">Resumo do processo, das alegações e dos documentos relevantes.</p></div>{closed ? <button type="button" className="button-secondary" onClick={() => onNavigate('conclusao')}>Consultar conclusão</button> : current ? <button type="button" className="button-primary" disabled={busy} onClick={() => onNavigate('encaminhamento')}>Definir encaminhamento</button> : <button type="button" className="button-primary" disabled={busy} onClick={generate}>{analysis ? 'Atualizar parecer desatualizado' : 'Gerar parecer'}</button>}</div>
     {operation.pending && <Busy>Preparando o parecer. Isso pode levar alguns minutos...</Busy>}
     <ErrorNotice error={operation.error} />
     {analysis ? <>
       {!current && <p className="notice">Parecer anterior, preservado para consulta. Ele não orienta a recomendação nem a alçada atuais deste processo.</p>}
-      <Mode value={analysis.generation_mode} />
-      <MarkdownContent>{analysis.explanation}</MarkdownContent>
-      <Warnings items={analysis.warnings} />
-      <Sources caseId={caseData.id} items={analysis.sources} />
-      {policy ? <div className="grid sm:grid-cols-2 gap-5 border-t border-line pt-5">
+      {policy && <div className="grid sm:grid-cols-3 gap-5 bg-surface rounded-lg p-5">
         <div><p className="field-label">Recomendação atual</p><strong>{policy.recommendation === 'ACORDO' ? 'Acordo' : 'Defesa'}</strong><p className="text-xs text-muted mt-2">Risco: {riskLabel(policy.risk_level)} · {reasonLabel(policy.reasoning_code)}</p></div>
-        {score && <div><p className="field-label">{score.label && !score.label.includes('não definida') ? score.label : (policy.recommendation === 'DEFESA' ? 'Confiança na recomendação' : 'Probabilidade estimada de derrota')}</p><strong>{(score.value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</strong></div>}
-        {policy.settlement_pricing && <dl className="sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">{[['Piso', policy.settlement_pricing.floor], ['Alvo', policy.settlement_pricing.target], ['Teto', policy.settlement_pricing.ceiling], ['Perda esperada', policy.settlement_pricing.expected_loss]].map(([label, value]) => <div key={label}><dt className="field-label">{label}</dt><dd className="text-sm">{money(value)}</dd></div>)}</dl>}
-        {policy.plain_language_explanation && <div className="sm:col-span-2 p-3.5 rounded-lg bg-surface/60 border border-line text-xs text-ink space-y-1">
-          <p className="field-label text-accent-ink font-medium">Justificativa da recomendação</p>
-          <p className="leading-relaxed">{policy.plain_language_explanation}</p>
-        </div>}
-        {!!policy.decision_path?.length && <div className="sm:col-span-2 text-xs text-muted space-y-1.5 pt-1">
-          <p className="field-label">Trilha da árvore de decisão (Random Forest)</p>
-          <ol className="list-decimal pl-4 space-y-1 text-xs text-ink/90">{policy.decision_path.map((step, i) => <li key={i}>{step}</li>)}</ol>
-        </div>}
-        {!!policy.forest_consensus_reasons?.length && <div className="sm:col-span-2 text-xs text-muted space-y-1.5 pt-1">
-          <p className="field-label">Fatores de consenso do modelo</p>
-          <ul className="list-disc pl-4 space-y-1 text-xs">{policy.forest_consensus_reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>
-        </div>}
-        {!!policy.applied_rules?.length && <div className="sm:col-span-2 text-xs text-muted"><p className="field-label">Regras aplicadas</p><ul className="list-disc pl-4 space-y-1">{policy.applied_rules.map((rule, i) => <li key={i}>{policyRule(rule)}</li>)}</ul></div>}
-      </div> : <p className="text-xs text-muted border-t border-line pt-4">Ainda não há recomendação ou alçada disponíveis para este processo.</p>}
-    </> : <p className="text-sm text-muted leading-relaxed">Ainda não há parecer salvo. Use “Analisar caso” para revisar os documentos e consultar as diretrizes de atuação disponíveis.</p>}
-    {!!caseData.checks.length && <details className="sources"><summary>Verificações documentais ({caseData.checks.length})</summary><div className="space-y-4 mt-4">{caseData.checks.map((check, i) => <article key={check.code + i}><p className="field-label">{{ consistent: 'Concordância textual', divergent: 'Divergência', not_verified: 'Não verificado' }[check.status]}</p><p className="text-xs leading-relaxed">{check.message}</p><Sources caseId={caseData.id} items={check.sources} /></article>)}</div></details>}
+        {score && <div><p className="field-label">{score.label}</p><strong>{(score.value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</strong></div>}
+        {policy.settlement_pricing?.expected_loss != null && <div><p className="field-label">Perda esperada</p><strong>{money(policy.settlement_pricing.expected_loss)}</strong></div>}
+      </div>}
+      <ConciseAssessment caseData={caseData} analysis={analysis} current={Boolean(current)} />
+      <div className="analysis-reading-width space-y-4"><Sources caseId={caseData.id} items={analysis.sources} />{recordedPolicy && <PolicyGuide analysis={analysis} historical={!current} />}</div>
+      {current && !closed && <details className="sources"><summary>Versão e atualização do parecer</summary><div className="space-y-3 mt-3"><p>{analysis.created_at ? 'Gerado em ' + dateTime(analysis.created_at) + '.' : 'Parecer salvo antes do registro de data de geração.'} Uma nova geração substitui a base do encaminhamento e exige sua revisão.</p>{!analysis.author_arguments?.length && !analysis.defense_arguments?.length && <p>Este parecer anterior não inclui o confronto estruturado de argumentos. Uma nova geração inclui essa fundamentação.</p>}<button type="button" className="button-secondary" disabled={busy} onClick={generate}>Gerar nova versão do parecer</button></div></details>}
+    </> : <p className="text-sm text-muted leading-relaxed">Ainda não há parecer salvo. Gere o parecer a partir dos documentos disponíveis neste processo.</p>}
   </section>
 }
