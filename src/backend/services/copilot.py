@@ -273,10 +273,21 @@ class Copilot:
                     "## 3. Condições pendentes\n\n[Definir prazo, meio de pagamento, dados conferidos do favorecido, custas, honorários e providências processuais.]\n\n"
                     "## 4. Alcance e formalização\n\n[Delimitar obrigações e alcance da quitação, quando aplicável, após revisão e concordância expressa.]\n\n"
                     "## 5. Assinaturas\n\n[Partes e representantes habilitados. Nenhuma assinatura ou anuência foi registrada nesta minuta.]\n")
+        latest = await self.store.latest_analysis(case.id)
+        current_policy = latest.policy if latest and latest.case_version == case.version else None
+        extra_payload = {"request": request.model_dump(), "base_draft": body}
+        if current_policy:
+            extra_payload["policy"] = current_policy.model_dump()
+
         if self.settings.ai_mode == "openai":
-            generated = await self.generate(GroundedText,
-                "Elabore o corpo da minuta solicitada em Markdown. Preserve pendências e marque pontos que exigem revisão. Use o valor informado, sem criar condições não fornecidas.",
-                case, sources, extra={"request": request.model_dump(), "base_draft": body})
+            prompt = (
+                "Elabore o corpo da minuta solicitada em Markdown. Integre as provas documentais dos autos e as "
+                "diretrizes da política em extra.policy (incluindo o caminho de decisão e regras aplicadas, se houver) "
+                "para fundamentar a tese jurídica de forma consistente. Preserve pendências e marque pontos que exigem revisão. "
+                "Use o valor informado, sem criar condições não fornecidas."
+            )
+            generated = await self.generate(GroundedText, prompt,
+                case, sources, extra=extra_payload)
             body, sources = generated.text, self.cited(generated.source_ids, sources)
         cited_pages = dict.fromkeys((source.document_name, source.page) for source in sources)
         bibliography = "\n\n## Documentos de referência\n\n" + "\n".join(

@@ -149,6 +149,9 @@ class PolicyResult(BaseModel):
     risk_level: RiskLevel
     settlement_pricing: SettlementPricing | None = None
     applied_rules: list[str] = Field(default_factory=list)
+    plain_language_explanation: str = ""
+    decision_path: list[str] = Field(default_factory=list)
+    forest_consensus_reasons: list[str] = Field(default_factory=list)
 
 
 class AnalyzeRequest(BaseModel):

@@ -1735,6 +1735,25 @@
             "title": "Confidence Score Semantics",
             "type": "string"
           },
+          "decision_path": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decision Path",
+            "type": "array"
+          },
+          "forest_consensus_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Forest Consensus Reasons",
+            "type": "array"
+          },
+          "plain_language_explanation": {
+            "default": "",
+            "title": "Plain Language Explanation",
+            "type": "string"
+          },
           "reasoning_code": {
             "enum": [
               "DOSSIE_NAO_CONFORME",

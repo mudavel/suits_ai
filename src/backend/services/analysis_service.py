@@ -36,10 +36,27 @@ class AnalysisService:
         else:
             warnings.append("Motor da branch 1 ainda não integrado: probabilidade, recomendação e alçada indisponíveis.")
         sources = self.copilot.context(case, "contrato extrato liveness titularidade parecer crédito", limit=10)
-        explanation = "Revisão documental local. " + " ".join(check.message for check in case.checks)
+        if policy and (policy.plain_language_explanation or policy.decision_path):
+            explanation_parts = []
+            if policy.plain_language_explanation:
+                explanation_parts.append(policy.plain_language_explanation)
+            if policy.decision_path:
+                explanation_parts.append("### Trilha da Decisão (Tracing)\n" + "\n".join(f"- {step}" for step in policy.decision_path))
+            if policy.forest_consensus_reasons:
+                explanation_parts.append("### Fatores de Consenso do Modelo\n" + "\n".join(f"- {reason}" for reason in policy.forest_consensus_reasons))
+            explanation = "\n\n".join(explanation_parts)
+        else:
+            explanation = "Revisão documental local. " + " ".join(check.message for check in case.checks)
+
         if self.settings.ai_mode == "openai":
-            generated = await self.copilot.generate(GroundedText,
-                "Produza um parecer documental curto. Explique a política fornecida, se houver; sem política, não recomende acordo/defesa nem atribua probabilidade.",
+            prompt = (
+                "Produza um parecer documental detalhado e fundamentado. Utilize a política e o tracing do modelo "
+                "fornecidos em extra.policy (incluindo a recomendação, o decision_path, as applied_rules e os "
+                "forest_consensus_reasons) para sintetizar em texto jurídico fluido por que a recomendação é de acordo "
+                "ou defesa e qual o racional da trilha percorrida pela inteligência. Sem política fornecida, limite-se "
+                "à análise documental e não recomende acordo/defesa nem atribua probabilidade."
+            )
+            generated = await self.copilot.generate(GroundedText, prompt,
                 case, sources, extra={"policy": policy.model_dump() if policy else None})
             explanation = generated.text
             sources = self.copilot.cited(generated.source_ids, sources)

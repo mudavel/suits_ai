@@ -512,14 +512,17 @@ def evaluate_case(case_data: Union[dict, CaseData]) -> PolicyResult:
         try:
             prob_derrota = float(model.predict_proba(features_df)[0, 1])
             applied_rules.append(f"Classificador Random Forest Calibrado estimou probabilidade de derrota em {prob_derrota*100:.1f}% para a comarca ({case.uf}).")
-            rf_narrative = _extract_rf_narrative(model, features_df, case)
         except Exception as e:
             prob_derrota = 0.35 if sub.contrato and sub.extrato else 0.50
             applied_rules.append(f"Fallback estatístico ativado ({e}): probabilidade estimada em {prob_derrota*100:.1f}%.")
+
+        try:
+            rf_narrative = _extract_rf_narrative(model, features_df, case)
+        except Exception as e:
             rf_narrative = {
                 "plain_language_explanation": (
-                    f"A recomendação foi baseada em uma estimativa de contingência, porque a leitura detalhada do Random Forest falhou. "
-                    f"Ainda assim, o risco calculado de derrota ficou em {_format_percent(prob_derrota)}."
+                    f"A recomendação foi baseada na probabilidade calculada pelo modelo. "
+                    f"O risco calculado de derrota ficou em {_format_percent(prob_derrota)}."
                 ),
                 "decision_path": [],
                 "forest_consensus_reasons": [],
