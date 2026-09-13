@@ -7,7 +7,7 @@ Assistente de operação jurídica para apoiar a escolha entre **defesa e acordo
 ## Apresentação
 
 - [Slides da apresentação](https://canva.link/nutqxnvmze1lbc1)
-- [Roteiro do vídeo](artefacts/suits_docs/video_script.md) — link da gravação ainda não informado.
+- [Vídeo](https://drive.google.com/file/d/1wyQtVQouJC6gcNqXsb5Si6ftE5mPsgCW/view?usp=sharing)
 - [Arquitetura da solução e diagramas](docs/architecture.md)
 - [Relatório exploratório da base histórica](artefacts/suits_docs/report.html) — abra o HTML no navegador após clonar o repositório.
 
