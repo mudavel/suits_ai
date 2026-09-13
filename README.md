@@ -5,7 +5,7 @@ HACKATHON UNICAMP 2026 — Enter AI Challenge — Grupo 9 — 12 de setembro de 
 
 ## Slides
 
-link
+[link](https://canva.link/nutqxnvmze1lbc1)
 
 ---
 
